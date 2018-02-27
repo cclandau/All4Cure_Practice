@@ -26,9 +26,11 @@ def getVectors():
 		rowCount += 1
 	lambdaData = open("LambdaFLC.csv", "r")
 	reader = csv.reader(lambdaData)
-	rowCount = 0
+	rowCount = -1
 	for row in reader:
-		patientVector[rowCount][2] = row[1]
+		if(rowCount > -1):
+			patientVector[rowCount][2] = row[1]
+			print patientVector[rowCount]
 		rowCount += 1
 	rowCount = 0
 getVectors()
