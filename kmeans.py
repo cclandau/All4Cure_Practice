@@ -18,27 +18,20 @@ np.set_printoptions(threshold=np.nan)
 
 unpack = getVectors()
 kapFLC = unpack[0]
-kapDates = unpack[1]
-lamFLC = unpack[2]
-lamDates = unpack[3]
+kapValsOnly = unpack[1]
+kapDates = unpack[2]
+lamFLC = unpack[3]
+lamValsOnly = unpack[4]
+lamDates = unpack[5]
 
-unpackVectOnly = getKappaLambda()
-kappaValues = unpackVectOnly[0]
-lambdaValues = unpackVectOnly[1]
-
-# print(kappaValues)
-# print()
-# print()
-print(len(kapDates))
-print(len(kappaValues))
 plt.subplot(2, 1, 1)
-plt.plot(kapDates, kapFLC, 'o-')
+plt.plot(kapDates, kapValsOnly, 'o-')
 plt.title('Kappa FLC')
 plt.xlabel('Dates')
 plt.ylabel(' KAPPA FLC VALUE')
 
 plt.subplot(2, 1, 2)
-plt.plot(lamDates, lamFLC, '.-')
+plt.plot(lamDates, lamValsOnly, '.-')
 plt.title('Lambda FLC')
 plt.xlabel('Dates')
 plt.ylabel(' LAMBDA FLC VALUE')
