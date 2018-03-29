@@ -64,4 +64,5 @@ def getVectors():
 	lamFLC = np.delete(lamFLC, np.s_[2], axis = 1)
 	return [kapFLC, kapDates, lamFLC, lamDates]
 
+
 getVectors()

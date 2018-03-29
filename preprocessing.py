@@ -1,6 +1,4 @@
-import csv
-from sklearn.cluster import KMeans
-from sklearn.preprocessing import StandardScaler
+from getTreatments import getTreatments
 from getVectors import getVectors
 import numpy as np
 from datetime import datetime
@@ -12,15 +10,12 @@ kapFLC = unpack[0]
 kapDates = unpack[1]
 lamFLC = unpack[2]
 lamDates = unpack[3]
+treatDict = getTreatments()
 
-#kapFLC and kapDates for Kappa
-#lamFLC and lamDates for Lambda
-X = lamFLC
-dates = lamDates
+X = np.concatenate((kapFLC, lamFLC), axis=0)
+dates = np.concatenate((kapDates, lamDates), axis=0)
 
-
-
-#Create and add first derivative column
+#Create first derivative column
 D1 = np.zeros((len(X), 1))
 for i in range(1, len(dates)-1):
     if X[i][0] == X[i-1][0]:
@@ -42,14 +37,13 @@ for i in range(1, len(dates)-1):
         D1[i] = min_val
     elif D1[i] == float('inf'):
         D1[i] = max_val
-X = np.hstack((X, D1))
 
-#Create and add second derivative column
+#Create second derivative column
 D2 = np.zeros((len(X), 1))
 for i in range(1, len(dates)-1):
     if X[i][0] == X[i-1][0]:
         xdif = dates[i] - dates[i-1]
-        ydif = np.float(X[i][2]) - np.float(X[i-1][2])
+        ydif = np.float(D1[i]) - np.float(D1[i-1])
         if ydif == 0:
             D2[i] = 0
         elif xdif.total_seconds()/86400 == 0:
@@ -66,23 +60,15 @@ for i in range(1, len(dates)-1):
         D2[i] = min_val2
     elif D2[i] == float('inf'):
         D2[i] = max_val2
-X = np.hstack((X, D2))
 
-#Deleting the patient identifier
-X = np.delete(X, np.s_[0], axis=1)
+FLCdict = {}
+for i in range(0, X.shape[0]):
+	if X[i][0] in FLCdict:
+		FLCdict[X[i][0]].append([X[i][1], dates[i], D1[i], D2[i]])
+	else:
+		FLCdict[X[i][0]] = []
+		FLCdict[X[i][0]].append([X[i][1], dates[i], D1[i], D2[i]])
 
-#Set up training and testing sets 50/50
-X = np.array(X, dtype = np.float)
-scaler = StandardScaler()
-X_Features = scaler.fit_transform(X)
-X_train = X_Features[0:math.floor(X_Features.shape[0]/2)]
-X_test = X_Features[math.floor(X_Features.shape[0]/2):X_Features.shape[0]]
-
-
-kmeans = KMeans(n_clusters=3, n_init=100).fit(X_train)
-kmeans.predict(X_test)
-kmeans.labels_
-kmeans.cluster_centers_
-print(kmeans.labels_)
-print(kmeans.cluster_centers_)
-print(D1)
+for i in FLCdict:
+	temp = FLCdict[i]
+	FLCdict[i] = sorted(temp, key=lambda temp_entry: temp_entry[1])
