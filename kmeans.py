@@ -2,9 +2,18 @@ import csv
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 from getVectors import getVectors
+from attemptVectorMaker import getKappaLambda
 import numpy as np
 from datetime import datetime
 import math
+
+from hdbscan import HDBSCAN
+from sklearn.cluster import DBSCAN
+from sklearn import metrics
+from sklearn.datasets.samples_generator import make_blobs
+import time
+import matplotlib.pyplot as plt
+
 np.set_printoptions(threshold=np.nan)
 
 unpack = getVectors()
@@ -13,13 +22,33 @@ kapDates = unpack[1]
 lamFLC = unpack[2]
 lamDates = unpack[3]
 
+unpackVectOnly = getKappaLambda()
+kappaValues = unpackVectOnly[0]
+lambdaValues = unpackVectOnly[1]
+
+# print(kappaValues)
+# print()
+# print()
+print(len(kapDates))
+print(len(kappaValues))
+plt.subplot(2, 1, 1)
+plt.plot(kapDates, kapFLC, 'o-')
+plt.title('Kappa FLC')
+plt.xlabel('Dates')
+plt.ylabel(' KAPPA FLC VALUE')
+
+plt.subplot(2, 1, 2)
+plt.plot(lamDates, lamFLC, '.-')
+plt.title('Lambda FLC')
+plt.xlabel('Dates')
+plt.ylabel(' LAMBDA FLC VALUE')
+plt.show()
 #kapFLC and kapDates for Kappa
 #lamFLC and lamDates for Lambda
 X = lamFLC
 dates = lamDates
 
-
-
+print('There are %d data points' % len(X))
 #Create and add first derivative column
 D1 = np.zeros((len(X), 1))
 for i in range(1, len(dates)-1):
@@ -74,11 +103,34 @@ X = np.delete(X, np.s_[0], axis=1)
 #Set up training and testing sets 50/50
 X = np.array(X, dtype = np.float)
 scaler = StandardScaler()
-X_Features = scaler.fit_transform(X)
-X_train = X_Features[0:math.floor(X_Features.shape[0]/2)]
-X_test = X_Features[math.floor(X_Features.shape[0]/2):X_Features.shape[0]]
+X_Features_scale = scaler.fit_transform(X)
+#X_Features_log = np.log(np.absolute(X))
+X_train = X_Features_scale[0:math.floor(X_Features_scale.shape[0]/2)]
+X_test = X_Features_scale[math.floor(X_Features_scale.shape[0]/2):X_Features_scale.shape[0]]
+
+# ### KMeans Portion ###
+# kmeans = KMeans(n_clusters=3, n_init=100).fit(X_train)
+# kmeans.predict(X_test)
+# kmeans.labels_
+# kmeans.cluster_centers_
+
+#logX = open('LogNormalized.csv', 'w')
+ScaledX = open('StandardScaler.csv', 'w')
+vec = open('vectorWrite.csv', 'w')
+
+# logWrite = csv.writer(logX)
+scaleWrite = csv.writer(ScaledX)
+vecWrite = csv.writer(vec)
+
+# for row in X_Features_log:
+#     logWrite.writerow([row])
+for eachRow in X_Features_scale:
+    scaleWrite.writerow([eachRow])
+for allRows in X:
+    vecWrite.writerow([allRows])
 
 
+<<<<<<< HEAD
 kmeans = KMeans(n_clusters=3, n_init=100).fit(X_train)
 kmeans.predict(X_test)
 kmeans.labels_
@@ -86,3 +138,43 @@ kmeans.cluster_centers_
 print(kmeans.labels_)
 print(kmeans.cluster_centers_)
 print(D1)
+=======
+#
+# ### HDBSCAN Portion ###
+# hdb_t1 = time.time()
+# hdb = HDBSCAN(min_cluster_size=10).fit(X_Features)
+# hdb_labels = hdb.labels_
+# hdb_elapsed_time = time.time() - hdb_t1
+# n_clusters_hdb_ = len(set(hdb_labels)) - (1 if -1 in hdb_labels else 0)
+#
+#
+# db_t1 = time.time()
+# db = DBSCAN(eps=0.1).fit(X_Features)
+# db_labels = db.labels_
+# db_elapsed_time = time.time() - db_t1
+#
+# print('\n\n++ HDBSCAN Results')
+# print('Estimated number of clusters: %d' % n_clusters_hdb_)
+# print('Silhouette Coefficient: %0.3f'
+#       % metrics.silhouette_score(X, hdb_labels))
+#
+# hdb_unique_labels = set(hdb_labels)
+# hdb_colors = plt.cm.Spectral(np.linspace(0, 1, len(hdb_unique_labels)))
+# fig = plt.figure(figsize=plt.figaspect(0.5))
+# hdb_axis = fig.add_subplot('121')
+#
+# print('hdbcolors are :')
+# print(hdb_colors)
+# print('\n\n')
+# print(hdb_unique_labels)
+#
+# for k, col in zip(hdb_unique_labels, hdb_colors):
+#     print(k)
+#     if k == -1:
+#         # Black used for noise.
+#         col = 'k'
+#     hdb_axis.plot(X[hdb_labels == k, 0], X[hdb_labels == k, 1], 'o', markerfacecolor=col,
+#                   markeredgecolor='k', markersize=6)
+# hdb_axis.set_title('HDBSCAN\nEstimated number of clusters: %d' % n_clusters_hdb_)
+# plt.show()
+>>>>>>> 2cd5d3eae277cb2498eb3acad9a8cd8e0d0e706c
