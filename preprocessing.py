@@ -110,9 +110,7 @@ for i in keysToDelete:
 
 for i in FLCdict.keys():
    tempFLC = np.array(FLCdict[i])
-   plt.figure()
-   plt.plot(tempFLC[:, 1], tempFLC[:, 0])
-   plt.title(i)
-   # print(tempFLC[:, 0])
-   # print(tempFLC[:, 1])
-plt.show()
+#    plt.figure()
+#    plt.plot(tempFLC[:, 1], tempFLC[:, 0].astype(float))
+#    plt.title(i)
+# plt.show()
