@@ -7,9 +7,9 @@ np.set_printoptions(threshold=np.nan)
 
 unpack = getVectors()
 kapFLC = unpack[0]
-kapDates = unpack[1]
-lamFLC = unpack[2]
-lamDates = unpack[3]
+kapDates = unpack[2]
+lamFLC = unpack[3]
+lamDates = unpack[5]
 treatDict = getTreatments()
 
 X = np.concatenate((kapFLC, lamFLC), axis=0)
@@ -69,14 +69,26 @@ for i in range(0, X.shape[0]):
 		FLCdict[X[i][0]] = []
 		FLCdict[X[i][0]].append([X[i][1], dates[i], D1[i], D2[i]])
 
-for i in FLCdict:
-    if FLCdict[i] !in treatDict:
-        del FLCdict[i]
+smolderingPatientsDict = {}
 
-for i in treatDict:
-    if treatDict[i] !in FLCdict[i]:
-        del treatDict[i]
+for i in FLCdict.keys():
+    temp = FLCdict[i]
+    FLCdict[i] = sorted(temp, key=lambda temp_entry: temp_entry[1])
 
-for i in FLCdict:
-	temp = FLCdict[i]
-	FLCdict[i] = sorted(temp, key=lambda temp_entry: temp_entry[1])
+keysToDelete = []
+
+for i in FLCdict.keys():
+    if i not in treatDict.keys():
+        smolderingPatientsDict[i] = FLCdict[i]
+        keysToDelete.append(i)
+        print("smoldering patient: " + i)
+    else:
+        tempFLC = FLCdict[i]
+        tempTreat = treatDict[i]
+        if(tempFLC[0][1] > tempTreat[0][1]):
+            keysToDelete.append(i)
+            print("patient with treatment before reading: " + i)
+        else:
+            print("good patient: " + i)
+for i in keysToDelete:
+    del FLCdict[i]
