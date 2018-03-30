@@ -22,11 +22,7 @@ def getVectors():
 	lambdaData = open("LambdaFLC.csv", "r")
 	reader = csv.reader(lambdaData)
 	lamFLC = np.array(list(reader))
-<<<<<<< HEAD
 
-=======
-	
->>>>>>> b265634bcc4d3ffe16c280759e2222bb1f4bf28a
 	kapFLC = np.delete(kapFLC, np.s_[0], axis = 0)
 	lamFLC = np.delete(lamFLC, np.s_[0], axis = 0)
 	kapFLC = np.delete(kapFLC, np.s_[3,4], axis = 1)

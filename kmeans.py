@@ -30,28 +30,8 @@ plt.title('Kappa FLC')
 plt.xlabel('Dates')
 plt.ylabel(' KAPPA FLC VALUE')
 
-<<<<<<< HEAD
 plt.subplot(2, 1, 2)
 plt.plot(lamDates, lamValsOnly, '.-')
-=======
-unpackVectOnly = getKappaLambda()
-kappaValues = unpackVectOnly[0]
-lambdaValues = unpackVectOnly[1]
-
-# print(kappaValues)
-# print()
-# print()
-print(len(kapDates))
-print(len(kappaValues))
-plt.subplot(2, 1, 1)
-plt.plot(kapDates, kapFLC, 'o-')
-plt.title('Kappa FLC')
-plt.xlabel('Dates')
-plt.ylabel(' KAPPA FLC VALUE')
-
-plt.subplot(2, 1, 2)
-plt.plot(lamDates, lamFLC, '.-')
->>>>>>> b265634bcc4d3ffe16c280759e2222bb1f4bf28a
 plt.title('Lambda FLC')
 plt.xlabel('Dates')
 plt.ylabel(' LAMBDA FLC VALUE')
@@ -143,18 +123,6 @@ for allRows in X:
     vecWrite.writerow([allRows])
 
 
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-kmeans = KMeans(n_clusters=3, n_init=100).fit(X_train)
-kmeans.predict(X_test)
-kmeans.labels_
-kmeans.cluster_centers_
-print(kmeans.labels_)
-print(kmeans.cluster_centers_)
-print(D1)
-=======
->>>>>>> b265634bcc4d3ffe16c280759e2222bb1f4bf28a
 #
 # ### HDBSCAN Portion ###
 # hdb_t1 = time.time()
@@ -193,7 +161,3 @@ print(D1)
 #                   markeredgecolor='k', markersize=6)
 # hdb_axis.set_title('HDBSCAN\nEstimated number of clusters: %d' % n_clusters_hdb_)
 # plt.show()
-<<<<<<< HEAD
-=======
->>>>>>> 2cd5d3eae277cb2498eb3acad9a8cd8e0d0e706c
->>>>>>> b265634bcc4d3ffe16c280759e2222bb1f4bf28a
