@@ -31,7 +31,6 @@ def getTreatments():
 	for i in treatDict:
 		temp = treatDict[i]
 		treatDict[i] = sorted(temp, key=lambda temp_entry: temp_entry[1])
-	print(treatDict["MM-1"])
 	return treatDict
 
 getTreatments()

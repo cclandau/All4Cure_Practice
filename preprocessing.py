@@ -1,6 +1,7 @@
 from getTreatments import getTreatments
 from getVectors import getVectors
 import numpy as np
+import matplotlib.pyplot as plt
 from datetime import datetime
 import math
 np.set_printoptions(threshold=np.nan)
@@ -78,17 +79,40 @@ for i in FLCdict.keys():
 keysToDelete = []
 
 for i in FLCdict.keys():
-    if i not in treatDict.keys():
-        smolderingPatientsDict[i] = FLCdict[i]
+    tempFLC = FLCdict[i]
+    if((tempFLC[np.array(FLCdict[i]).shape[0] - 1][1] - tempFLC[0][1]).days <= 180):
+        #print("patient with less than six months: " + i)
         keysToDelete.append(i)
-        print("smoldering patient: " + i)
     else:
-        tempFLC = FLCdict[i]
-        tempTreat = treatDict[i]
-        if(tempFLC[0][1] > tempTreat[0][1]):
+        if i not in treatDict.keys():
+            smolderingPatientsDict[i] = FLCdict[i]
             keysToDelete.append(i)
-            print("patient with treatment before reading: " + i)
+            #print("smoldering patient: " + i)
         else:
-            print("good patient: " + i)
+            tempTreat = treatDict[i]
+            if(tempFLC[0][1] > tempTreat[0][1]):
+                keysToDelete.append(i)
+                #print("patient with treatment before reading: " + i)
+            haveFoundSixMonth = False
+            for j in range(0, np.array(FLCdict[i]).shape[0]): #for every row in matrix
+                if (((tempFLC[j][1] - tempFLC[0][1]).days >= 180) and (haveFoundSixMonth != True)):
+                    sixMonthIndex = j
+                    haveFoundSixMonth = True
+            firstSixMonths = np.array(tempFLC)[:(sixMonthIndex), :]
+            FLCdict[i] = firstSixMonths
+            tempFLC = FLCdict[i]
+            print("patient: " + i)
+            print(tempFLC[:, 1])
+            #else:
+                #print("good patient: " + i)
 for i in keysToDelete:
     del FLCdict[i]
+
+for i in FLCdict.keys():
+   tempFLC = np.array(FLCdict[i])
+   plt.figure()
+   plt.plot(tempFLC[:, 1], tempFLC[:, 0])
+   plt.title(i)
+   # print(tempFLC[:, 0])
+   # print(tempFLC[:, 1])
+plt.show()
