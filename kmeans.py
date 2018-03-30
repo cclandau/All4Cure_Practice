@@ -24,13 +24,24 @@ lamFLC = unpack[3]
 lamValsOnly = unpack[4]
 lamDates = unpack[5]
 
+print(min(kapValsOnly), max(kapValsOnly))
+print(min(lamValsOnly), max(lamValsOnly))
+print()
+print()
+print(min(kapDates), max(kapDates))
+print(min(lamDates), max(lamDates))
 plt.subplot(2, 1, 1)
+FLCrange = np.arange(0, 10)
+kapdate = np.arange(2007, 2018)
+plt.yticks(np.arange()
 plt.plot(kapDates, kapValsOnly, 'o-')
 plt.title('Kappa FLC')
 plt.xlabel('Dates')
 plt.ylabel(' KAPPA FLC VALUE')
 
 plt.subplot(2, 1, 2)
+lamdate = np.arange(2006, 2018)
+plt.yticks(FLCrange)
 plt.plot(lamDates, lamValsOnly, '.-')
 plt.title('Lambda FLC')
 plt.xlabel('Dates')
