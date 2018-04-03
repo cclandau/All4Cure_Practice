@@ -78,10 +78,20 @@ for i in FLCdict.keys():
 
 keysToDelete = []
 
+with open('unProcessed.csv', 'w') as csvfile:
+    temp = []
+    for i in FLCdict.keys():
+        temp = np.array(FLCdict[i])
+        csvfile.write(str(i))
+        for j in range (0, temp.shape[0]):
+            csvfile.write(", " + str(temp[j][0]))
+            csvfile.write(", " + str(temp[j][1]))
+        csvfile.write('\n')
+
 for i in FLCdict.keys():
     tempFLC = FLCdict[i]
     if((tempFLC[np.array(FLCdict[i]).shape[0] - 1][1] - tempFLC[0][1]).days <= 180):
-        #print("patient with less than six months: " + i)
+        print("patient with less than six months: " + i)
         keysToDelete.append(i)
     else:
         if i not in treatDict.keys():
@@ -92,7 +102,7 @@ for i in FLCdict.keys():
             tempTreat = treatDict[i]
             if(tempFLC[0][1] > tempTreat[0][1]):
                 keysToDelete.append(i)
-                #print("patient with treatment before reading: " + i)
+                print("patient with treatment before reading: " + i)
             haveFoundSixMonth = False
             for j in range(0, np.array(FLCdict[i]).shape[0]): #for every row in matrix
                 if (((tempFLC[j][1] - tempFLC[0][1]).days >= 180) and (haveFoundSixMonth != True)):
@@ -101,18 +111,36 @@ for i in FLCdict.keys():
             firstSixMonths = np.array(tempFLC)[:(sixMonthIndex), :]
             FLCdict[i] = firstSixMonths
             tempFLC = FLCdict[i]
-            print("patient: " + i)
-            print(tempFLC[:, 1])
+            #print("patient: " + i)
+            #print(tempFLC[:, 1])
             #else:
                 #print("good patient: " + i)
+
+
 for i in keysToDelete:
     del FLCdict[i]
 
-for i in FLCdict.keys():
+with open('processed.csv', 'w') as csvfile:
+    temp = []
+    for i in FLCdict.keys():
+        temp = np.array(FLCdict[i])
+        if(temp.shape[0]>=5):
+            csvfile.write(str(i))
+            for j in range (0, 5):
+                csvfile.write(", " + str(temp[j][0]))
+                csvfile.write(", " + str(temp[j][1]))
+            csvfile.write('\n')
+
+print(len(FLCdict.keys()))
+
+
+
+
+'''for i in FLCdict.keys():
    tempFLC = np.array(FLCdict[i])
    plt.figure()
    plt.plot(tempFLC[:, 1], tempFLC[:, 0])
    plt.title(i)
    # print(tempFLC[:, 0])
    # print(tempFLC[:, 1])
-plt.show()
+   plt.show()'''
