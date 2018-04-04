@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from datetime import datetime
 import math
+from scipy import stats
 np.set_printoptions(threshold=np.nan)
 
 unpack = getVectors()
@@ -120,20 +121,33 @@ for i in FLCdict.keys():
 for i in keysToDelete:
     del FLCdict[i]
 
+preSpearman = []
+
 with open('processed.csv', 'w') as csvfile:
     temp = []
     for i in FLCdict.keys():
         temp = np.array(FLCdict[i])
         if(temp.shape[0]>=5):
+            temp2 = [temp[0][0], temp[1][0], temp[2][0], temp[3][0], temp[4][0]]
             csvfile.write(str(i))
             for j in range (0, 5):
                 csvfile.write(", " + str(temp[j][0]))
                 csvfile.write(", " + str(temp[j][1]))
             csvfile.write('\n')
+            preSpearman.append(temp2)
+preSpearman = np.array(preSpearman)
 
-print(len(FLCdict.keys()))
 
+spearman = np.zeros((preSpearman.shape[0], preSpearman.shape[0]))
+for i in range(0, preSpearman.shape[0]):
+    for j in range(0, preSpearman.shape[0]):
+        SpearR = stats.spearmanr(preSpearman[i, :], preSpearman[j, :])
+        corr = SpearR[0]
+        spearman[i, j] = corr
+        spearman[j, i] = corr
 
+spearman = np.round(spearman, 1)
+np.savetxt("spearman.csv", spearman, delimiter=",")
 
 
 '''for i in FLCdict.keys():
