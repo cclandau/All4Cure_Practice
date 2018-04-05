@@ -132,7 +132,7 @@ with open('processed.csv', 'w') as csvfile:
     temp = []
     for i in FLCdict.keys():
         temp = np.array(FLCdict[i])
-        if(temp.shape[0]>=5):
+        if(temp.shape[0]>=5): # will need to change 5 to a field
             temp2 = [temp[0][0], temp[1][0], temp[2][0], temp[3][0], temp[4][0]]
             csvfile.write(str(i))
             useablePatients.append(str(i))
@@ -142,6 +142,7 @@ with open('processed.csv', 'w') as csvfile:
             csvfile.write('\n')
             preSpearman.append(temp2)
 preSpearman = np.array(preSpearman)
+preSpearmanNum = np.array(preSpearman.astype(float))
 
 spearman = np.zeros((preSpearman.shape[0], preSpearman.shape[0]))
 for i in range(0, preSpearman.shape[0]):
@@ -177,25 +178,65 @@ with open('hdbscanPairs.csv', 'w') as csvfile:
     csvfile.write("Patient Number, Cluster Label, Cluster Probability" + '\n')
     csvfile.write('\n'.join('{}, {}, {}'.format(x[0], x[1], x[2]) for x in merged))
 
-print('Patients, Cluster Labels, and Probability')
-print(merged)
+
 print('\n\nHDBSCAN Results')
 print('Estimated number of clusters: %d' % n_clusters_hdb_)
-# # print('Silhouette Coefficient: %0.3f'
-#       % metrics.silhouette_score(preSpearman, hdb_labels))
+print('Patients, Cluster Labels, and Probability')
+print(merged)
 
-hdb_unique_labels = set(hdb_labels)
-hdb_colors = plt.cm.Spectral(np.linspace(0, 1, len(hdb_unique_labels)))
-fig = plt.figure(figsize=plt.figaspect(0.5))
-hdb_axis = fig.add_subplot('121')
+### minmax Normalization ###
+minValues = preSpearmanNum.min(axis=1)
+maxValues = preSpearmanNum.max(axis=1)
+minMaxMatrix = np.zeros((len(minValues), 5))
+index = 0;
+row = 0;
+# print("FLC Value of each element, Index, Row, minValue and maxValue")
+for patient in np.nditer(preSpearmanNum):
+    # print("'{0}', '{1}', '{2}', '{3}', '{4}'".format(patient, index, row, minValues[row], maxValues[row]))
+    temp = np.array(patient)
+    temp = temp - minValues[row] # will need to change to be a field
+    minMaxMatrix[row, index] = (temp / maxValues[row])
+    index = index + 1
+    if (index == 5):
+        index = 0
+        row = row + 1
+normalizedWithPatientNum = np.array(list(zip(useablePatients, minMaxMatrix)), dtype=object)
 
-for k, col in zip(hdb_unique_labels, hdb_colors):
-    if k == -1:
-        # Black used for noise.
-        col = 'k'
-    ## Not sure what the x, y axes should be, this is how I had it set up for the previous run of HDBSCAN
-    ## Right now it's only comparing the first and second data points of all patients
-    hdb_axis.plot(preSpearman[hdb_labels == k, 0].astype(float), preSpearman[hdb_labels == k, 1].astype(float), 'o', markerfacecolor=col,
-                  markeredgecolor='k', markersize=6)
-hdb_axis.set_title('HDBSCAN\nEstimated number of clusters: %d' % n_clusters_hdb_)
-plt.show()
+with open('minMaxNormalized.csv', 'w') as csvfile:
+    csvfile.write("Patient Number + Normalized FLC Values")
+    csvfile.write('\n')
+    csvfile.write('\n'.join('{}, {}'.format(x[0], x[1]) for x in normalizedWithPatientNum))
+
+hdb_t1_mm = time.time()
+hdb_mm = HDBSCAN(min_cluster_size=2).fit(minMaxMatrix)
+hdb_labels_mm = hdb_mm.labels_
+hdb_prob_mm = hdb_mm.probabilities_
+hdb_elapsed_time = time.time() - hdb_t1_mm
+n_clusters_hdb_mm = len(set(hdb_labels_mm)) - (1 if -1 in hdb_labels_mm else 0)
+merged_mm = np.array(list(zip(useablePatients, hdb_labels_mm, hdb_prob_mm)))
+
+with open('hdbscanPairs_minmax.csv', 'w') as csvfile:
+    csvfile.write("Patient Number, Cluster Label, Cluster Probability" + '\n')
+    csvfile.write('\n'.join('{}, {}, {}'.format(x[0], x[1], x[2]) for x in merged_mm))
+
+print('\n\nHDBSCAN Results for Min-Max Normalization')
+print('Estimated number of clusters: %d' % n_clusters_hdb_mm)
+print('Patients, Cluster Labels, and Probability')
+print(merged_mm)
+
+
+# hdb_unique_labels = set(hdb_labels)
+# hdb_colors = plt.cm.Spectral(np.linspace(0, 1, len(hdb_unique_labels)))
+# fig = plt.figure(figsize=plt.figaspect(0.5))
+# hdb_axis = fig.add_subplot('121')
+#
+# for k, col in zip(hdb_unique_labels, hdb_colors):
+#     if k == -1:
+#         # Black used for noise.
+#         col = 'k'
+#     ## Not sure what the x, y axes should be, this is how I had it set up for the previous run of HDBSCAN
+#     ## Right now it's only comparing the first and second data points of all patients
+#     hdb_axis.plot(preSpearman[hdb_labels == k, 0].astype(float), preSpearman[hdb_labels == k, 1].astype(float), 'o', markerfacecolor=col,
+#                   markeredgecolor='k', markersize=6)
+# hdb_axis.set_title('HDBSCAN\nEstimated number of clusters: %d' % n_clusters_hdb_)
+#plt.show()
