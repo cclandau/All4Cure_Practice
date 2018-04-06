@@ -186,20 +186,24 @@ print(merged)
 
 ### minmax Normalization ###
 minValues = preSpearmanNum.min(axis=1)
-maxValues = preSpearmanNum.max(axis=1)
 minMaxMatrix = np.zeros((len(minValues), 5))
 index = 0;
 row = 0;
-# print("FLC Value of each element, Index, Row, minValue and maxValue")
+print("FLC Value of each element, Index, Row, minValue and maxValue")
 for patient in np.nditer(preSpearmanNum):
-    # print("'{0}', '{1}', '{2}', '{3}', '{4}'".format(patient, index, row, minValues[row], maxValues[row]))
+    print("'{0}', '{1}', '{2}', '{3}'".format(patient, index, row, minValues[row]))
     temp = np.array(patient)
     temp = temp - minValues[row] # will need to change to be a field
-    minMaxMatrix[row, index] = (temp / maxValues[row])
+    # Subtracting original min portion
+    minMaxMatrix[row, index] = temp
     index = index + 1
+    # in the last column, need to determine max value of new row & update
     if (index == 5):
+        maxVal = minMaxMatrix[row, :].max()
+        minMaxMatrix[row, :] = minMaxMatrix[row, :] / maxVal
         index = 0
         row = row + 1
+#print(minMaxMatrix)
 normalizedWithPatientNum = np.array(list(zip(useablePatients, minMaxMatrix)), dtype=object)
 
 with open('minMaxNormalized.csv', 'w') as csvfile:
