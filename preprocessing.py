@@ -8,6 +8,7 @@ from scipy import stats
 from hdbscan import HDBSCAN
 from sklearn.cluster import DBSCAN
 from sklearn import metrics
+from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.datasets.samples_generator import make_blobs
 import time
 np.set_printoptions(threshold=np.nan)
@@ -84,6 +85,7 @@ for i in FLCdict.keys():
 
 keysToDelete = []
 
+#! Not really necessary
 with open('unProcessed.csv', 'w') as csvfile:
     temp = []
     for i in FLCdict.keys():
@@ -93,11 +95,12 @@ with open('unProcessed.csv', 'w') as csvfile:
             csvfile.write(", " + str(temp[j][0]))
             csvfile.write(", " + str(temp[j][1]))
         csvfile.write('\n')
+#!
 
 for i in FLCdict.keys():
     tempFLC = FLCdict[i]
     if((tempFLC[np.array(FLCdict[i]).shape[0] - 1][1] - tempFLC[0][1]).days <= 180):
-        print("patient with less than six months: " + i)
+        #print("patient with less than six months: " + i)
         keysToDelete.append(i)
     else:
         if i not in treatDict.keys():
@@ -108,7 +111,7 @@ for i in FLCdict.keys():
             tempTreat = treatDict[i]
             if(tempFLC[0][1] > tempTreat[0][1]):
                 keysToDelete.append(i)
-                print("patient with treatment before reading: " + i)
+                #print("patient with treatment before reading: " + i)
             haveFoundSixMonth = False
             for j in range(0, np.array(FLCdict[i]).shape[0]): #for every row in matrix
                 if (((tempFLC[j][1] - tempFLC[0][1]).days >= 180) and (haveFoundSixMonth != True)):
@@ -121,7 +124,6 @@ for i in FLCdict.keys():
             #print(tempFLC[:, 1])
             #else:
                 #print("good patient: " + i)
-
 
 for i in keysToDelete:
     del FLCdict[i]
@@ -144,6 +146,12 @@ with open('processed.csv', 'w') as csvfile:
 preSpearman = np.array(preSpearman)
 preSpearmanNum = np.array(preSpearman.astype(float))
 
+unprocessedMatrix = np.array(list(zip(useablePatients, preSpearmanNum)), dtype=object)
+with open('unscaledData.csv', 'w') as csvfile:
+    csvfile.write("Patient Number + UnScaled FLC Values" + '\n')
+    csvfile.write('\n'.join('{}, {}'.format(x[0], x[1]) for x in unprocessedMatrix))
+
+### creating the spearman's correlation matrix ###
 spearman = np.zeros((preSpearman.shape[0], preSpearman.shape[0]))
 for i in range(0, preSpearman.shape[0]):
     for j in range(0, preSpearman.shape[0]):
@@ -155,7 +163,7 @@ for i in range(0, preSpearman.shape[0]):
 spearman = np.round(spearman, 1)
 np.savetxt("spearman.csv", spearman, delimiter=",")
 
-
+### plotting flc value for each patient ###
 # for i in FLCdict.keys():
 #    tempFLC = np.array(FLCdict[i])
 #    plt.figure()
@@ -174,6 +182,7 @@ hdb_elapsed_time = time.time() - hdb_t1
 n_clusters_hdb_ = len(set(hdb_labels)) - (1 if -1 in hdb_labels else 0)
 merged = np.array(list(zip(useablePatients, hdb_labels, hdb_prob)))
 
+
 with open('hdbscanPairs.csv', 'w') as csvfile:
     csvfile.write("Patient Number, Cluster Label, Cluster Probability" + '\n')
     csvfile.write('\n'.join('{}, {}, {}'.format(x[0], x[1], x[2]) for x in merged))
@@ -189,9 +198,9 @@ minValues = preSpearmanNum.min(axis=1)
 minMaxMatrix = np.zeros((len(minValues), 5))
 index = 0;
 row = 0;
-print("FLC Value of each element, Index, Row, minValue and maxValue")
+#print("FLC Value of each element, Index, Row, minValue and maxValue")
 for patient in np.nditer(preSpearmanNum):
-    print("'{0}', '{1}', '{2}', '{3}'".format(patient, index, row, minValues[row]))
+    #print("'{0}', '{1}', '{2}', '{3}'".format(patient, index, row, minValues[row]))
     temp = np.array(patient)
     temp = temp - minValues[row] # will need to change to be a field
     # Subtracting original min portion
@@ -203,19 +212,18 @@ for patient in np.nditer(preSpearmanNum):
         minMaxMatrix[row, :] = minMaxMatrix[row, :] / maxVal
         index = 0
         row = row + 1
-#print(minMaxMatrix)
 normalizedWithPatientNum = np.array(list(zip(useablePatients, minMaxMatrix)), dtype=object)
 
 with open('minMaxNormalized.csv', 'w') as csvfile:
     csvfile.write("Patient Number + Normalized FLC Values")
     csvfile.write('\n')
     csvfile.write('\n'.join('{}, {}'.format(x[0], x[1]) for x in normalizedWithPatientNum))
-
+### hdb minmax normalized ###
 hdb_t1_mm = time.time()
 hdb_mm = HDBSCAN(min_cluster_size=2).fit(minMaxMatrix)
 hdb_labels_mm = hdb_mm.labels_
 hdb_prob_mm = hdb_mm.probabilities_
-hdb_elapsed_time = time.time() - hdb_t1_mm
+hdb_elapsed_time_mm = time.time() - hdb_t1_mm
 n_clusters_hdb_mm = len(set(hdb_labels_mm)) - (1 if -1 in hdb_labels_mm else 0)
 merged_mm = np.array(list(zip(useablePatients, hdb_labels_mm, hdb_prob_mm)))
 
@@ -228,7 +236,39 @@ print('Estimated number of clusters: %d' % n_clusters_hdb_mm)
 print('Patients, Cluster Labels, and Probability')
 print(merged_mm)
 
+### Log Normalization portion ###
+#logRawMatrix = np.log10(preSpearman.astype(float) + 1)
+logRawMatrix = np.log2(preSpearman.astype(float) + 1)
 
+print(np.log2(preSpearman.astype(float) + 1))
+print()
+print(np.log10(preSpearman.astype(float) + 1))
+logScaledWithPatientNum = np.array(list(zip(useablePatients, logRawMatrix)), dtype=object)
+
+with open('log2Scaled.csv', 'w') as csvfile:
+    csvfile.write("Patient Number + Normalized FLC Values")
+    csvfile.write('\n')
+    csvfile.write('\n'.join('{}, {}'.format(x[0], x[1]) for x in logScaledWithPatientNum))
+
+### hdb log scaled ###
+hdb_t1_log = time.time()
+hdb_log = HDBSCAN(min_cluster_size=2).fit(logRawMatrix)
+hdb_labels_log = hdb_log.labels_
+hdb_prob_log = hdb_log.probabilities_
+hdb_elapsed_time_log = time.time() - hdb_t1_log
+n_clusters_hdb_log = len(set(hdb_labels_log)) - (1 if -1 in hdb_labels_log else 0)
+merged_log = np.array(list(zip(useablePatients, hdb_labels_log, hdb_prob_log)))
+
+with open('hdbscanPairs_log2.csv', 'w') as csvfile:
+    csvfile.write("Patient Number, Cluster Label, Cluster Probability" + '\n')
+    csvfile.write('\n'.join('{}, {}, {}'.format(x[0], x[1], x[2]) for x in merged_log))
+
+print('\n\nHDBSCAN Results for Log Scaling')
+print('Estimated number of clusters: %d' % n_clusters_hdb_log)
+print('Patients, Cluster Labels, and Probability')
+print(merged_log)
+
+### hdb ___ plotting ###
 # hdb_unique_labels = set(hdb_labels)
 # hdb_colors = plt.cm.Spectral(np.linspace(0, 1, len(hdb_unique_labels)))
 # fig = plt.figure(figsize=plt.figaspect(0.5))
