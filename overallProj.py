@@ -15,7 +15,7 @@ import time
 import inspect
 np.set_printoptions(threshold=np.nan)
 
-## Global Variable, setting the number of data points we look at to 5
+## Global Variable, setting the number of data points we initially look at to 5
 numberOfPoints = 5
 
 def extractInfo():
@@ -148,11 +148,11 @@ def processingWrite():
         temp = []
         for i in FLCdict.keys():
             temp = np.array(FLCdict[i])
-            if(temp.shape[0]>=5): # will need to change 5 to a field
+            if(temp.shape[0] >= numberOfPoints):
                 temp2 = [temp[0][0], temp[1][0], temp[2][0], temp[3][0], temp[4][0]]
                 csvfile.write(str(i))
                 useablePatients.append(str(i))
-                for j in range (0, 5):
+                for j in range (0, numberOfPoints):
                     csvfile.write(", " + str(temp[j][0]))
                     csvfile.write(", " + str(temp[j][1]))
                 csvfile.write('\n')
@@ -180,7 +180,7 @@ def spearmansCorr():
 
 def minMaxNormalization():
     minValues = np.array(preSpearman.astype(float).min(axis=1))
-    minMaxMatrix = np.zeros((len(minValues), 5))
+    minMaxMatrix = np.zeros((len(minValues), numberOfPoints))
     index = 0;
     row = 0;
     #print("FLC Value of each element, Index, Row, minValue and maxValue")
@@ -192,7 +192,7 @@ def minMaxNormalization():
         minMaxMatrix[row, index] = temp
         index = index + 1
         # in the last column, need to determine max value of new row & update
-        if (index == 5):
+        if (index == numberOfPoints):
             maxVal = minMaxMatrix[row, :].max()
             minMaxMatrix[row, :] = minMaxMatrix[row, :] / maxVal
             index = 0
