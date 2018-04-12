@@ -165,8 +165,7 @@ def processingWrite():
                 numReadings = numReadings - lengthSegment + 1
                 counter += 1
     preSpearman = np.array(preSpearman)
-    preSpearmanNum = np.array(preSpearman.astype(float))
-
+    armanNum = np.array(preSpearman.astype(float))
     unprocessedMatrix = np.array(list(zip(useablePatients, np.array(preSpearman.astype(float)))), dtype=object)
     with open('unscaledData.csv', 'w') as csvfile:
         csvfile.write("Patient Number + UnScaled FLC Values" + '\n')
@@ -183,7 +182,7 @@ def spearmansCorr():
             spearman[j, i] = corr
 
     spearman = np.round(spearman, 1)
-    np.savetxt("spearman.csv", spearman, delimiter=",")
+    np.savetxt("spearman.csv", spearman, '%1.1f', delimiter=",")
     return spearman
 
 def minMaxNormalization():
