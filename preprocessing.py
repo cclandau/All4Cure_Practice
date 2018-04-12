@@ -130,19 +130,26 @@ for i in keysToDelete:
 
 preSpearman = []
 useablePatients = []
+lengthSegment = 5
 with open('processed.csv', 'w') as csvfile:
     temp = []
     for i in FLCdict.keys():
         temp = np.array(FLCdict[i])
-        if(temp.shape[0]>=5): # will need to change 5 to a field
-            temp2 = [temp[0][0], temp[1][0], temp[2][0], temp[3][0], temp[4][0]]
-            csvfile.write(str(i))
+        numReadings = temp.shape[0] ###numReadings = number of readings left to process
+        counter = 0
+        while(numReadings >= lengthSegment): # will need to change 5 to a field
+            temp2 = []
+            for j in range((lengthSegment-1)*counter, lengthSegment + (lengthSegment-1)*counter):
+                temp2.append(temp[j][0])
+            csvfile.write(str(i) + "-" + str(counter))
             useablePatients.append(str(i))
-            for j in range (0, 5):
+            for j in range (((lengthSegment - 1)*counter), lengthSegment + ((lengthSegment - 1)*counter)):
                 csvfile.write(", " + str(temp[j][0]))
                 csvfile.write(", " + str(temp[j][1]))
             csvfile.write('\n')
             preSpearman.append(temp2)
+            numReadings = numReadings - lengthSegment + 1
+            counter += 1
 preSpearman = np.array(preSpearman)
 preSpearmanNum = np.array(preSpearman.astype(float))
 
