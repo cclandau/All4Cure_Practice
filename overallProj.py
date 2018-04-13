@@ -144,7 +144,7 @@ def processingWrite():
     preSpearman = []
     global useablePatients
     useablePatients = []
-    lengthSegment = 5 ## We should just use the global variable number of points
+    lengthSegment = 5
     with open('processed.csv', 'w') as csvfile:
         temp = []
         for i in FLCdict.keys():
@@ -165,7 +165,8 @@ def processingWrite():
                 numReadings = numReadings - lengthSegment + 1
                 counter += 1
     preSpearman = np.array(preSpearman)
-    armanNum = np.array(preSpearman.astype(float))
+    preSpearmanNum = np.array(preSpearman.astype(float))
+
     unprocessedMatrix = np.array(list(zip(useablePatients, np.array(preSpearman.astype(float)))), dtype=object)
     with open('unscaledData.csv', 'w') as csvfile:
         csvfile.write("Patient Number + UnScaled FLC Values" + '\n')
@@ -181,7 +182,7 @@ def spearmansCorr():
             spearman[i, j] = corr
             spearman[j, i] = corr
     spearman = np.round(spearman, 1)
-    np.savetxt("spearman.csv", spearman, '%1.1f', delimiter=",")
+    np.savetxt("spearman.csv", spearman, delimiter=",")
     return spearman
 
 def minMaxNormalization():
@@ -212,7 +213,6 @@ def minMaxNormalization():
     return minMaxMatrix
 
 def logScaling():
-
     logRawMatrix = np.log10(preSpearman.astype(float) + 1)
     logScaledWithPatientNum = np.array(list(zip(useablePatients, logRawMatrix)), dtype=object)
 
@@ -226,7 +226,6 @@ def logScaling():
     # unprocessed - np.array(preSpearman.astype(float))
     # minMax - minMaxMatrix
     # logScaled - logRawMatrix
-
 def hdbProcessing(workingMatrix, selector):
     hdb_t1 = time.time()
     hdb = HDBSCAN(min_cluster_size=2).fit(workingMatrix)
@@ -285,6 +284,18 @@ def pearsonsCorr():
     np.savetxt("pearson.csv",pearson, delimiter=",")
     return pearson
 
+def tauCorr():
+    tau = np.zeros((preSpearman.shape[0], preSpearman.shape[0]))
+    for i in range(0, preSpearman.shape[0]):
+        for j in range(0, preSpearman.shape[0]):
+            calculatedTau = stats.kendalltau(preSpearman[i, :].astype(float), preSpearman[j, :].astype(float))
+            corr = calculatedTau[0]
+            tau[i, j] = corr
+            tau[j, i] = corr
+    calculatedTau = np.round(calculatedTau, 1)
+    np.savetxt("tau.csv",tau, delimiter=",")
+    return tau
+
 
 
 extractInfo()
@@ -297,14 +308,18 @@ pearsonsMatrix = pearsonsCorr()
 pearsonsDistanceMatrix = distanceMatrix(pearsonsMatrix)
 minMaxMatrix = minMaxNormalization()
 logRawMatrix = logScaling()
+tauMatrix = tauCorr()
+tauDistanceMatrix = distanceMatrix(tauMatrix)
 hdbProcessing(np.array(preSpearman.astype(float)), "hdbscanPairs_unscaled")
 hdbProcessing(minMaxMatrix, "hdbscanPairs_minmax")
 hdbProcessing(logRawMatrix, "hdbscanPairs_log10")
 hdbProcessing(pearsonsDistanceMatrix, "hdbscanPairs_pearsons")
 hdbProcessing(spearmanDistanceMatrix, "hdbscanPairs_spearman")
+hdbProcessing(tauDistanceMatrix, "hdbscanPairs_tau")
 
 np.savetxt("pearsonDistance.csv", pearsonsDistanceMatrix, delimiter=",")
 np.savetxt("spearmanDistance.csv", spearmanDistanceMatrix, delimiter=",")
+np.savetxt("tauDistance.csv", tauDistanceMatrix, delimiter=",")
 
 #this part is just for testing the accuracy of pearson and spearman clustering
 for row in range(0, preSpearman.shape[0]):
@@ -314,4 +329,4 @@ for row in range(0, preSpearman.shape[0]):
     reader = csv.reader(patNumber)
     patList = np.array(list(reader))
     plt.title(patList[row, 0])
-    plt.savefig(patList[row, 0])
+    #plt.savefig(patList[row, 0])
