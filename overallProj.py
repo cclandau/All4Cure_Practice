@@ -272,7 +272,18 @@ def distanceMatrix(correlationMatrix):
     calculatedMatrix = np.add(calculatedMatrix, 1) #subtracts each value from 1
     return calculatedMatrix
 
-def 
+def pearsonsCorr():
+    pearson = np.zeros((preSpearman.shape[0], preSpearman.shape[0]))
+    for i in range(0, preSpearman.shape[0]):
+        for j in range(0, preSpearman.shape[0]):
+            calculatedPearson = stats.pearsonr(preSpearman[i, :].astype(float), preSpearman[j, :].astype(float))
+            corr = calculatedPearson[0]
+            pearson[i, j] = corr
+            pearson[j, i] = corr
+    calculatedPearson = np.round(calculatedPearson, 1)
+    np.savetxt("pearson.csv",pearson, delimiter=",")
+    return pearson
+
 
 
 extractInfo()
@@ -281,8 +292,12 @@ FLCdictionary(D1, D2)
 processingWrite()
 spearmanMatrix = spearmansCorr()
 spearmanDistanceMatrix = distanceMatrix(spearmanMatrix)
+pearsonsMatrix = pearsonsCorr()
+pearsonsDistanceMatrix = distanceMatrix(pearsonsMatrix)
 minMaxMatrix = minMaxNormalization()
 logRawMatrix = logScaling()
 hdbProcessing(np.array(preSpearman.astype(float)), "hdbscanPairs_unscaled")
 hdbProcessing(minMaxMatrix, "hdbscanPairs_minmax")
 hdbProcessing(logRawMatrix, "hdbscanPairs_log10")
+hdbProcessing(pearsonsDistanceMatrix, "hdbscanPairs_pearsons")
+hdbProcessing(spearmanDistanceMatrix, "hdbscanPairs_spearman")
