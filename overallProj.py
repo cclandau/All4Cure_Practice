@@ -13,6 +13,7 @@ from sklearn import metrics
 from sklearn.datasets.samples_generator import make_blobs
 import time
 import inspect
+import csv
 np.set_printoptions(threshold=np.nan)
 
 ## Global Variable, setting the number of data points we initially look at to 5
@@ -123,7 +124,6 @@ def FLCdictionary(D1, D2):
                 FLCdict[i] = firstSixMonths
                 tempFLC = FLCdict[i]
                 #print("patient: " + i)
-                #print(tempFLC[:, 1])
                 #else:
                     #print("good patient: " + i)
     for i in keysToDelete:
@@ -301,3 +301,16 @@ hdbProcessing(minMaxMatrix, "hdbscanPairs_minmax")
 hdbProcessing(logRawMatrix, "hdbscanPairs_log10")
 hdbProcessing(pearsonsDistanceMatrix, "hdbscanPairs_pearsons")
 hdbProcessing(spearmanDistanceMatrix, "hdbscanPairs_spearman")
+
+np.savetxt("pearsonDistance.csv", pearsonsDistanceMatrix, delimiter=",")
+np.savetxt("spearmanDistance.csv", spearmanDistanceMatrix, delimiter=",")
+
+#this part is just for testing the accuracy of pearson and spearman clustering
+#for row in range(0, preSpearman.shape[0]):
+#    plt.plot([1,2,3,4,5], preSpearman[row, :].astype(float))
+#    patNumber = open("hdbscanPairs_spearman.csv", "r")
+#    reader = csv.reader(patNumber)
+#    patList = np.array(list(reader))
+#    plt.title(patList[row, 0])
+#    plt.savefig(patList[row, 0])
+#    plt.clf()
