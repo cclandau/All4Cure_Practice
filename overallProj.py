@@ -144,7 +144,7 @@ def processingWrite():
     preSpearman = []
     global useablePatients
     useablePatients = []
-    lengthSegment = 5
+    lengthSegment = 5 ## We should just use the global variable number of points
     with open('processed.csv', 'w') as csvfile:
         temp = []
         for i in FLCdict.keys():
@@ -213,6 +213,7 @@ def minMaxNormalization():
     return minMaxMatrix
 
 def logScaling():
+
     logRawMatrix = np.log10(preSpearman.astype(float) + 1)
     logScaledWithPatientNum = np.array(list(zip(useablePatients, logRawMatrix)), dtype=object)
 
@@ -226,6 +227,7 @@ def logScaling():
     # unprocessed - np.array(preSpearman.astype(float))
     # minMax - minMaxMatrix
     # logScaled - logRawMatrix
+
 def hdbProcessing(workingMatrix, selector):
     hdb_t1 = time.time()
     hdb = HDBSCAN(min_cluster_size=2).fit(workingMatrix)
