@@ -156,7 +156,7 @@ def processingWrite():
                 for j in range((lengthSegment-1)*counter, lengthSegment + (lengthSegment-1)*counter):
                     temp2.append(temp[j][0])
                 csvfile.write(str(i) + "-" + str(counter))
-                useablePatients.append(str(i))
+                useablePatients.append(str(i) + "-" + str(counter))
                 for j in range (((lengthSegment - 1)*counter), lengthSegment + ((lengthSegment - 1)*counter)):
                     csvfile.write(", " + str(temp[j][0]))
                     csvfile.write(", " + str(temp[j][1]))
@@ -306,11 +306,11 @@ np.savetxt("pearsonDistance.csv", pearsonsDistanceMatrix, delimiter=",")
 np.savetxt("spearmanDistance.csv", spearmanDistanceMatrix, delimiter=",")
 
 #this part is just for testing the accuracy of pearson and spearman clustering
-#for row in range(0, preSpearman.shape[0]):
-#    plt.plot([1,2,3,4,5], preSpearman[row, :].astype(float))
-#    patNumber = open("hdbscanPairs_spearman.csv", "r")
-#    reader = csv.reader(patNumber)
-#    patList = np.array(list(reader))
-#    plt.title(patList[row, 0])
-#    plt.savefig(patList[row, 0])
-#    plt.clf()
+for row in range(0, preSpearman.shape[0]):
+    plt.clf()
+    plt.plot([1,2,3,4,5], preSpearman[row, :].astype(float))
+    patNumber = open("processed.csv", "r")
+    reader = csv.reader(patNumber)
+    patList = np.array(list(reader))
+    plt.title(patList[row, 0])
+    plt.savefig(patList[row, 0])
