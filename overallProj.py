@@ -13,6 +13,7 @@ from sklearn import metrics
 from sklearn.datasets.samples_generator import make_blobs
 import time
 import inspect
+import csv
 np.set_printoptions(threshold=np.nan)
 
 ## Global Variable, setting the number of data points we initially look at to 5
@@ -123,7 +124,6 @@ def FLCdictionary(D1, D2):
                 FLCdict[i] = firstSixMonths
                 tempFLC = FLCdict[i]
                 #print("patient: " + i)
-                #print(tempFLC[:, 1])
                 #else:
                     #print("good patient: " + i)
     for i in keysToDelete:
@@ -156,7 +156,7 @@ def processingWrite():
                 for j in range((lengthSegment-1)*counter, lengthSegment + (lengthSegment-1)*counter):
                     temp2.append(temp[j][0])
                 csvfile.write(str(i) + "-" + str(counter))
-                useablePatients.append(str(i))
+                useablePatients.append(str(i) + "-" + str(counter))
                 for j in range (((lengthSegment - 1)*counter), lengthSegment + ((lengthSegment - 1)*counter)):
                     csvfile.write(", " + str(temp[j][0]))
                     csvfile.write(", " + str(temp[j][1]))
@@ -180,7 +180,6 @@ def spearmansCorr():
             corr = SpearR[0]
             spearman[i, j] = corr
             spearman[j, i] = corr
-
     spearman = np.round(spearman, 1)
     np.savetxt("spearman.csv", spearman, '%1.1f', delimiter=",")
     return spearman
@@ -266,13 +265,53 @@ def hdbProcessing(workingMatrix, selector):
     #plt.show()
     return;
 
+#this function takes in either a spearman or pearson correlation matrix and
+#outputs the proper distance matrix
+def distanceMatrix(correlationMatrix):
+    calculatedMatrix = np.add(correlationMatrix, 1) #shifts the correlation matrix by 1
+    calculatedMatrix = np.divide(calculatedMatrix, -2) #divides the entire matrix by -2
+    calculatedMatrix = np.add(calculatedMatrix, 1) #subtracts each value from 1
+    return calculatedMatrix
+
+def pearsonsCorr():
+    pearson = np.zeros((preSpearman.shape[0], preSpearman.shape[0]))
+    for i in range(0, preSpearman.shape[0]):
+        for j in range(0, preSpearman.shape[0]):
+            calculatedPearson = stats.pearsonr(preSpearman[i, :].astype(float), preSpearman[j, :].astype(float))
+            corr = calculatedPearson[0]
+            pearson[i, j] = corr
+            pearson[j, i] = corr
+    calculatedPearson = np.round(calculatedPearson, 1)
+    np.savetxt("pearson.csv",pearson, delimiter=",")
+    return pearson
+
+
+
 extractInfo()
 D1, D2 = derivativeMaker()
 FLCdictionary(D1, D2)
 processingWrite()
 spearmanMatrix = spearmansCorr()
+spearmanDistanceMatrix = distanceMatrix(spearmanMatrix)
+pearsonsMatrix = pearsonsCorr()
+pearsonsDistanceMatrix = distanceMatrix(pearsonsMatrix)
 minMaxMatrix = minMaxNormalization()
 logRawMatrix = logScaling()
 hdbProcessing(np.array(preSpearman.astype(float)), "hdbscanPairs_unscaled")
 hdbProcessing(minMaxMatrix, "hdbscanPairs_minmax")
 hdbProcessing(logRawMatrix, "hdbscanPairs_log10")
+hdbProcessing(pearsonsDistanceMatrix, "hdbscanPairs_pearsons")
+hdbProcessing(spearmanDistanceMatrix, "hdbscanPairs_spearman")
+
+np.savetxt("pearsonDistance.csv", pearsonsDistanceMatrix, delimiter=",")
+np.savetxt("spearmanDistance.csv", spearmanDistanceMatrix, delimiter=",")
+
+#this part is just for testing the accuracy of pearson and spearman clustering
+for row in range(0, preSpearman.shape[0]):
+    plt.clf()
+    plt.plot([1,2,3,4,5], preSpearman[row, :].astype(float))
+    patNumber = open("processed.csv", "r")
+    reader = csv.reader(patNumber)
+    patList = np.array(list(reader))
+    plt.title(patList[row, 0])
+    plt.savefig(patList[row, 0])
