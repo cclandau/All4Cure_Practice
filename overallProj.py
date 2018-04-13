@@ -181,7 +181,6 @@ def spearmansCorr():
             corr = SpearR[0]
             spearman[i, j] = corr
             spearman[j, i] = corr
-
     spearman = np.round(spearman, 1)
     np.savetxt("spearman.csv", spearman, delimiter=",")
     return spearman
@@ -265,11 +264,23 @@ def hdbProcessing(workingMatrix, selector):
     #plt.show()
     return;
 
+#this function takes in either a spearman or pearson correlation matrix and
+#outputs the proper distance matrix
+def distanceMatrix(correlationMatrix):
+    calculatedMatrix = np.add(correlationMatrix, 1) #shifts the correlation matrix by 1
+    calculatedMatrix = np.divide(calculatedMatrix, -2) #divides the entire matrix by -2
+    calculatedMatrix = np.add(calculatedMatrix, 1) #subtracts each value from 1
+    return calculatedMatrix
+
+def 
+
+
 extractInfo()
 D1, D2 = derivativeMaker()
 FLCdictionary(D1, D2)
 processingWrite()
 spearmanMatrix = spearmansCorr()
+spearmanDistanceMatrix = distanceMatrix(spearmanMatrix)
 minMaxMatrix = minMaxNormalization()
 logRawMatrix = logScaling()
 hdbProcessing(np.array(preSpearman.astype(float)), "hdbscanPairs_unscaled")
