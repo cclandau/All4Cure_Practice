@@ -4,7 +4,7 @@ from getTreatments import getTreatments
 from getVectors import getVectors
 import numpy as np
 import matplotlib.pyplot as plt
-from datetime import datetime
+from datetime import datetime, date, time, timedelta
 import math
 from scipy import stats
 from hdbscan import HDBSCAN
@@ -14,10 +14,17 @@ from sklearn.datasets.samples_generator import make_blobs
 import time
 import inspect
 import csv
+from ipykernel.tests.test_serialize import point
+from astropy.wcs.docstrings import row
+from sympy.polys.partfrac import apart
+from sympy.polys.polytools import intervals
+from docutils.writers.docutils_xml import RawXmlError
+from scipy.io.arff.tests.test_arffread import DataTest
 np.set_printoptions(threshold=np.nan)
 
-## Global Variable, setting the number of data points we initially look at to 5
+# # Global Variable, setting the number of data points we initially look at to 5
 numberOfPoints = 5
+
 
 def extractInfo():
     unpack = getVectors()
@@ -33,48 +40,251 @@ def extractInfo():
     treatDict = getTreatments()
     return
 
+def extractRawInfo():
+    with open("PatientList.csv", "r") as patList:
+        reader = csv.reader(patList)
+        patList = np.array(list(reader))
+        patDict = {}
+        for i in range(1, patList.shape[0]):
+            # KEY = MM-# VALUE = whether they are Kappa or Lambda
+            patDict[patList[i][0]] = patList[i][3]
+        
+    with open("raw_KappaFLC.csv", "r") as rawKappaData:
+        reader = csv.reader(rawKappaData)
+        rawKapFLC = np.array(list(reader))
+    
+    with open("raw_LambdaFLC.csv", "r") as rawLambdaData:
+        reader = csv.reader(rawLambdaData)
+        rawLamFLC = np.array(list(reader))
+
+    rawKapFLC = np.delete(rawKapFLC, np.s_[0], axis = 0)
+    rawLamFLC = np.delete(rawLamFLC, np.s_[0], axis = 0)
+    rawKapFLC = np.delete(rawKapFLC, np.s_[3,4], axis = 1)
+    rawLamFLC = np.delete(rawLamFLC, np.s_[3,4], axis = 1)
+    
+    #Loop through Kappa patient records, deleting any records of Lambda patients
+    #At the same time, read the date into a list of datetime objects for better use
+    temp1 = 0
+    temp2 = 0
+    rawKapDates = []
+    rawLamDates = []
+
+    while temp1 != rawKapFLC.shape[0]:
+        if patDict.get(rawKapFLC[temp1][0]) != "Kappa":
+            rawKapFLC = np.delete(rawKapFLC, np.s_[temp1], axis = 0)
+        else:
+            rawKapFLC[temp1][2] = rawKapFLC[temp1][2].replace(" 00:00:00", "")
+            if len(rawKapFLC[temp1][2]) == 8:
+                rawKapFLC[temp1][2] = "0" + rawKapFLC[temp1][2]
+                rawKapFLC[temp1][2] = rawKapFLC[temp1][2][0:3] + "0" + rawKapFLC[temp1][2][3:]
+            elif len(rawKapFLC[temp1][2]) == 9:
+                if rawKapFLC[temp1][2][0:2] == "11" or rawKapFLC[temp1][2][0:2] == "12" or rawKapFLC[temp1][2][0:2] == "10":
+                    rawKapFLC[temp1][2] = rawKapFLC[temp1][2][0:3] + "0" + rawKapFLC[temp1][2][3:]
+                else:
+                    rawKapFLC[temp1][2] = "0" + rawKapFLC[temp1][2]
+            rawKapDates.append(datetime.strptime(rawKapFLC[temp1][2], '%Y-%m-%d').date()) 
+            temp1 = temp1 + 1
+
+    #Do the same thing for the Lambda patient records
+    while temp2 != rawLamFLC.shape[0]:
+        if patDict.get(rawLamFLC[temp2][0]) != "Lambda":
+            rawLamFLC = np.delete(rawLamFLC, np.s_[temp2], axis = 0)
+        else:
+            rawLamFLC[temp2][2] = rawLamFLC[temp2][2].replace(" 00:00:00", "")
+            rawLamDates.append(datetime.strptime(rawLamFLC[temp2][2], '%Y-%m-%d').date())
+            temp2 = temp2 + 1
+    
+    rawKapDates = np.array(rawKapDates)
+    rawLamDates = np.array(rawLamDates)
+    
+   
+
+    global raw_X
+    raw_X = np.concatenate((rawKapFLC, rawLamFLC), axis=0)
+    
+    global raw_dates
+    raw_dates = np.concatenate((rawKapDates, rawLamDates), axis=0)    
+    
+    global dataTest
+    dataTest = {}
+    
+    ## PATIENT, FLC VALUE, TEST DATE
+    ## N X M MATRIX = ROWS X COLUMNS
+    for i in range(0, raw_X.shape[0]):
+        # If this patient is already in the dictionary, add additional FLC test values
+        if raw_X[i][0] in dataTest:
+            dataTest[raw_X[i][0]].append([raw_X[i][1], raw_dates[i]])
+        else: # add to dictionary
+            dataTest[raw_X[i][0]] = []
+            dataTest[raw_X[i][0]].append([raw_X[i][1], raw_dates[i]])      
+    
+    with open("rawValuesMatrix.csv", "w") as csvfile:        
+        for key,value in dataTest.items():
+            csvfile.write(key + ': ')
+            for v in value:
+                csvfile.write(v[0] + ", ")             
+                csvfile.write(str(v[1]) + " ")
+            csvfile.write('\n')
+    
+def rawDelete():
+    for i in dataTest.keys():
+        temp = dataTest[i]
+        dataTest[i] = sorted(temp, key=lambda temp_entry: temp_entry[1])
+    
+    keysToDelete = []
+    smolderingRawPatientsDict = {}
+    
+    for i in dataTest.keys():
+        tempFLC = dataTest[i]
+        if((tempFLC[np.array(dataTest[i]).shape[0] - 1][1] - tempFLC[0][1]).days <= 180):
+            # print("patient with less than six months: " + i)
+            keysToDelete.append(i)
+        else:
+            if i not in treatDict.keys():
+                smolderingRawPatientsDict[i] = dataTest[i]
+                keysToDelete.append(i)
+                # print("smoldering patient: " + i)
+            else:
+                tempTreat = treatDict[i]
+                if(tempFLC[0][1] > tempTreat[0][1]):  # #tempFLC[row][column] -> FLC DATE KAPPA/LAMBDA*
+                    keysToDelete.append(i)
+                    # print("patient with treatment before reading: " + i)
+                haveFoundSixMonth = False
+                for j in range(0, np.array(dataTest[i]).shape[0]):  # for every row in matrix
+                    if (((tempFLC[j][1] - tempFLC[0][1]).days >= 180) and (haveFoundSixMonth != True)):
+                        sixMonthIndex = j
+                        haveFoundSixMonth = True
+                firstSixMonths = np.array(tempFLC)[:(sixMonthIndex), :]
+                #dataTest[i] = firstSixMonths
+                #tempFLC = dataTest[i]
+                # print("patient: " + i)
+                # else:
+                    # print("good patient: " + i)
+    for i in keysToDelete:
+        del dataTest[i]
+    
+    with open("rawValuesFilter_1.csv", "w") as csvfile:        
+        for key,value in dataTest.items():
+            csvfile.write(key + ': ')
+            for v in value:
+                csvfile.write(v[0] + ", ")             
+                csvfile.write(str(v[1]) + " ")
+            csvfile.write('\n')
+    
+    print("written")
+    
+def rawBinMaker():
+    ## MAP
+    ## KEY = MM-
+    ## VALUE = DICTIONARY => KEY = NUMBER OF WEEKS - (3->5)*N
+    ##                       VALUE = LIST OF FLC VALUES IN THAT TIME FRAME
+    outerDict = {}
+    weekCounter = 1
+    for eachKey, value in dataTest.items(): 
+        allTests = [] 
+        allDates = []
+        print("About to make inner dictionary for: " + eachKey)
+        print(value)
+        for v in value:            
+            allTests.append(v[0])
+            allDates.append(str(v[1]))
+        outerDict[eachKey] = patientBinCreator(eachKey, allTests, allDates)
+    print("Went through all patients, printing outer Dictionary NOW")
+    with open("rawValuesBins_1.csv", "w", newline='') as csvfile:
+        for x in outerDict:
+            print(x)            
+            csvfile.write(x)
+            csvfile.write("\n")
+            for y in outerDict[x]:
+                csvfile.write(" " + str(y) + " : " + str(outerDict[x][y]))
+                csvfile.write("\n")
+                print(y, ' : ' , outerDict[x][y])
+    
+def patientBinCreator(patientID, FLC_Value, Date):
+    #innerDict = {'0' : ['test initial'], '1' : ['a', 'b', 'c']}
+    print(type(Date[0]))
+    for x in range(0, len(Date)):
+        Date[x] = datetime.strptime(Date[x], '%Y-%m-%d').date()
+        print(x)
+    innerDict = {}
+    innerDict[0] = [FLC_Value[0], Date[0]]
+    binNumber = 0
+    dateToCompare = Date[0]
+    for dateInstance in range(1, len(Date) - 1): 
+        timeDiff = Date[dateInstance] - dateToCompare
+        timeDifference = timeDiff.days
+        print(timeDifference)
+        if (timeDifference > 21 and timeDifference < 35):
+            if (binNumber == 0):
+                binNumber = 1
+            print("within range for " + str(binNumber) + " bin!")
+            if (binNumber in innerDict):
+                print("ADDING TO EXISTING BIN")
+                innerDict[binNumber].extend([FLC_Value[dateInstance], Date[dateInstance]])
+            else:
+                innerDict[binNumber] = [FLC_Value[dateInstance], Date[dateInstance]]
+            print(innerDict[binNumber])
+        elif (timeDifference > 35):
+            print("Not within range, starting bin number " + str(binNumber) + "!")
+            binNumber = binNumber + 1
+            dateToCompare = dateToCompare + timedelta(days=28)
+            if (binNumber in innerDict):
+                print("ADDING TO EXISTING BIN")
+                innerDict[binNumber].extend([FLC_Value[dateInstance], Date[dateInstance]])
+            else:
+                innerDict[binNumber] = [FLC_Value[dateInstance], Date[dateInstance]]
+            print(innerDict[binNumber])
+        else:
+            print("Too small for range, delete this item")
+            print(str(timeDifference))
+            pass
+    print(innerDict)
+    print("About to return to rawBinMaker")    
+    return innerDict
+
+    
 def derivativeMaker():
-    #Create first derivative column
+    # Create first derivative column
     D1 = np.zeros((len(X), 1))
-    for i in range(1, len(dates)-1):
-        if X[i][0] == X[i-1][0]:
-            xdif = dates[i] - dates[i-1]
-            ydif = np.float(X[i][1]) - np.float(X[i-1][1])
+    for i in range(1, len(dates) - 1):
+        if X[i][0] == X[i - 1][0]:
+            xdif = dates[i] - dates[i - 1]
+            ydif = np.float(X[i][1]) - np.float(X[i - 1][1])
             if ydif == 0:
                 D1[i] = 0
-            elif xdif.total_seconds()/86400 == 0:
+            elif xdif.total_seconds() / 86400 == 0:
                 if ydif > 0:
                     D1[i] = float('inf')
                 else:
                     D1[i] = float('-inf')
             else:
-                D1[i] = ydif/(xdif.total_seconds()/86400)
+                D1[i] = ydif / (xdif.total_seconds() / 86400)
     min_val = D1[np.isfinite(D1)].min()
     max_val = D1[np.isfinite(D1)].max()
-    for i in range(1, len(dates)-1):
+    for i in range(1, len(dates) - 1):
         if D1[i] == float('-inf'):
             D1[i] = min_val
         elif D1[i] == float('inf'):
             D1[i] = max_val
 
-    #Create second derivative column
+    # Create second derivative column
     D2 = np.zeros((len(X), 1))
-    for i in range(1, len(dates)-1):
-        if X[i][0] == X[i-1][0]:
-            xdif = dates[i] - dates[i-1]
-            ydif = np.float(D1[i]) - np.float(D1[i-1])
+    for i in range(1, len(dates) - 1):
+        if X[i][0] == X[i - 1][0]:
+            xdif = dates[i] - dates[i - 1]
+            ydif = np.float(D1[i]) - np.float(D1[i - 1])
             if ydif == 0:
                 D2[i] = 0
-            elif xdif.total_seconds()/86400 == 0:
+            elif xdif.total_seconds() / 86400 == 0:
                 if ydif > 0:
                     D2[i] = float('inf')
                 else:
                     D2[i] = float('-inf')
             else:
-                D2[i] = ydif/(xdif.total_seconds()/86400)
+                D2[i] = ydif / (xdif.total_seconds() / 86400)
     min_val2 = D2[np.isfinite(D2)].min()
     max_val2 = D2[np.isfinite(D2)].max()
-    for i in range(1, len(dates)-1):
+    for i in range(1, len(dates) - 1):
         if D2[i] == float('-inf'):
             D2[i] = min_val2
         elif D2[i] == float('inf'):
@@ -82,15 +292,41 @@ def derivativeMaker():
 
     return D1, D2
 
+# dataTemp = Cece's working data Matrix
+# Base FLC dictionary off of original raw values
+# Delete patients with less than six months of data
+# Delete patients who can't be found in treatment list - smoldering
+# Delete patients who don't have a baseline reading
+#     i.e: Treatment date is earlier than first FLC test date
+# Currently have matrix - entire timeline of patients with the following characteristics:
+#     - sufficient data, > 6 months
+#     - proper baseline value
+#     - are "normal" non-smoldering myeloma patients
+# THEN: GO THROUGH AND
+#     check each data entry for the remainder of the matrix
+#     Starting at date/time 0, check for all values 3-5 weeks from that point
+#     If there is one value, use that for the next row
+#     If there is NO value
+#         Check to see if there are data points for a time period of 6-10 weeks since the last data point
+#             If this is TRUE & there is a data point 6-10 weeks since the previous one, we will interpolate regardless of getTreatments
+#             If this is FALSE, then check to see if the treatment since last data point is equal to treatment of next data point
+#                 If this is TRUE (Treatment 1 = Treatment 2), even if they are zero - then we will interpolate these values at 4 week intervals
+#                 If this is FALSE, create a NEW vector MMX_0 contained data up until gap,
+#                                     MMX_1 will be the vector starting at the time given by the next data point
+#     If there are MULTIPLE FLC Values between 3-5 weeks since the previous data point
+#         Choose the FLC value that is closest to the time =  previous data point date + 4 weeks
+
 def FLCdictionary(D1, D2):
     global FLCdict
     FLCdict = {}
+
     for i in range(0, X.shape[0]):
     	if X[i][0] in FLCdict:
     		FLCdict[X[i][0]].append([X[i][1], dates[i], D1[i], D2[i]])
     	else:
     		FLCdict[X[i][0]] = []
     		FLCdict[X[i][0]].append([X[i][1], dates[i], D1[i], D2[i]])
+
 
     smolderingPatientsDict = {}
 
@@ -99,33 +335,32 @@ def FLCdictionary(D1, D2):
         FLCdict[i] = sorted(temp, key=lambda temp_entry: temp_entry[1])
 
     keysToDelete = []
-
     for i in FLCdict.keys():
         tempFLC = FLCdict[i]
         if((tempFLC[np.array(FLCdict[i]).shape[0] - 1][1] - tempFLC[0][1]).days <= 180):
-            #print("patient with less than six months: " + i)
+            # print("patient with less than six months: " + i)
             keysToDelete.append(i)
         else:
             if i not in treatDict.keys():
                 smolderingPatientsDict[i] = FLCdict[i]
                 keysToDelete.append(i)
-                #print("smoldering patient: " + i)
+                # print("smoldering patient: " + i)
             else:
                 tempTreat = treatDict[i]
-                if(tempFLC[0][1] > tempTreat[0][1]):
+                if(tempFLC[0][1] > tempTreat[0][1]):  # #tempFLC[row][column] -> FLC DATE KAPPA/LAMBDA*
                     keysToDelete.append(i)
-                    #print("patient with treatment before reading: " + i)
+                    # print("patient with treatment before reading: " + i)
                 haveFoundSixMonth = False
-                for j in range(0, np.array(FLCdict[i]).shape[0]): #for every row in matrix
+                for j in range(0, np.array(FLCdict[i]).shape[0]):  # for every row in matrix
                     if (((tempFLC[j][1] - tempFLC[0][1]).days >= 180) and (haveFoundSixMonth != True)):
                         sixMonthIndex = j
                         haveFoundSixMonth = True
                 firstSixMonths = np.array(tempFLC)[:(sixMonthIndex), :]
                 FLCdict[i] = firstSixMonths
                 tempFLC = FLCdict[i]
-                #print("patient: " + i)
-                #else:
-                    #print("good patient: " + i)
+                # print("patient: " + i)
+                # else:
+                    # print("good patient: " + i)
     for i in keysToDelete:
         del FLCdict[i]
     ### plotting flc value for each patient ###
@@ -144,20 +379,20 @@ def processingWrite():
     preSpearman = []
     global useablePatients
     useablePatients = []
-    lengthSegment = 5
+    lengthSegment = 5  # # Should we leave this as different than numberOfPoints?
     with open('processed.csv', 'w') as csvfile:
         temp = []
         for i in FLCdict.keys():
             temp = np.array(FLCdict[i])
-            numReadings = temp.shape[0] ###numReadings = number of readings left to process
+            numReadings = temp.shape[0]  # ##numReadings = number of readings left to process
             counter = 0
-            while(numReadings >= lengthSegment): # will need to change 5 to a field
+            while(numReadings >= lengthSegment):  # will need to change 5 to a field
                 temp2 = []
-                for j in range((lengthSegment-1)*counter, lengthSegment + (lengthSegment-1)*counter):
+                for j in range((lengthSegment - 1) * counter, lengthSegment + (lengthSegment - 1) * counter):
                     temp2.append(temp[j][0])
                 csvfile.write(str(i) + "-" + str(counter))
                 useablePatients.append(str(i) + "-" + str(counter))
-                for j in range (((lengthSegment - 1)*counter), lengthSegment + ((lengthSegment - 1)*counter)):
+                for j in range (((lengthSegment - 1) * counter), lengthSegment + ((lengthSegment - 1) * counter)):
                     csvfile.write(", " + str(temp[j][0]))
                     csvfile.write(", " + str(temp[j][1]))
                 csvfile.write('\n')
@@ -165,8 +400,8 @@ def processingWrite():
                 numReadings = numReadings - lengthSegment + 1
                 counter += 1
     preSpearman = np.array(preSpearman)
-    preSpearmanNum = np.array(preSpearman.astype(float))
-
+    preSpearmanNum = np.array(preSpearman.astype(float))                 
+                
     unprocessedMatrix = np.array(list(zip(useablePatients, np.array(preSpearman.astype(float)))), dtype=object)
     with open('unscaledData.csv', 'w') as csvfile:
         csvfile.write("Patient Number + UnScaled FLC Values" + '\n')
@@ -190,11 +425,11 @@ def minMaxNormalization():
     minMaxMatrix = np.zeros((len(minValues), numberOfPoints))
     index = 0;
     row = 0;
-    #print("FLC Value of each element, Index, Row, minValue and maxValue")
+    # print("FLC Value of each element, Index, Row, minValue and maxValue")
     for patient in np.nditer(np.array(preSpearman.astype(float))):
-        #print("'{0}', '{1}', '{2}', '{3}'".format(patient, index, row, minValues[row]))
+        # print("'{0}', '{1}', '{2}', '{3}'".format(patient, index, row, minValues[row]))
         temp = np.array(patient)
-        temp = temp - minValues[row] # will need to change to be a field
+        temp = temp - minValues[row]  # will need to change to be a field
         # Subtracting original min portion
         minMaxMatrix[row, index] = temp
         index = index + 1
@@ -222,10 +457,12 @@ def logScaling():
         csvfile.write('\n'.join('{}, {}'.format(x[0], x[1]) for x in logScaledWithPatientNum))
     return logRawMatrix
 
-### parameter for hdbProcessing should be:
+
+# ## parameter for hdbProcessing should be:
     # unprocessed - np.array(preSpearman.astype(float))
     # minMax - minMaxMatrix
     # logScaled - logRawMatrix
+
 def hdbProcessing(workingMatrix, selector):
     hdb_t1 = time.time()
     hdb = HDBSCAN(min_cluster_size=2).fit(workingMatrix)
@@ -235,11 +472,9 @@ def hdbProcessing(workingMatrix, selector):
     n_clusters_hdb_ = len(set(hdb_labels)) - (1 if -1 in hdb_labels else 0)
     merged = np.array(list(zip(useablePatients, hdb_labels, hdb_prob)))
 
-
     with open(selector + '.csv', 'w') as csvfile:
         csvfile.write("Patient Number, Cluster Label, Cluster Probability" + '\n')
         csvfile.write('\n'.join('{}, {}, {}'.format(x[0], x[1], x[2]) for x in merged))
-
 
     print('\n\nHDBSCAN Results for ' + selector)
     print('Estimated number of clusters: %d' % n_clusters_hdb_)
@@ -256,20 +491,22 @@ def hdbProcessing(workingMatrix, selector):
         if k == -1:
             # Black used for noise.
             col = 'k'
-        ## Not sure what the x, y axes should be, this is how I had it set up for the previous run of HDBSCAN
-        ## Right now it's only comparing the first and second data points of all patients
+        # # Not sure what the x, y axes should be, this is how I had it set up for the previous run of HDBSCAN
+        # # Right now it's only comparing the first and second data points of all patients
         hdb_axis.plot(workingMatrix[hdb_labels == k, 0].astype(float), workingMatrix[hdb_labels == k, 1].astype(float), 'o', markerfacecolor=col,
                       markeredgecolor='k', markersize=6)
     hdb_axis.set_title('HDBSCAN\nEstimated number of clusters: %d' % n_clusters_hdb_)
-    #plt.show()
+    # plt.show()
     return;
 
-#this function takes in either a spearman or pearson correlation matrix and
-#outputs the proper distance matrix
+
+# this function takes in either a spearman or pearson correlation matrix and
+# outputs the proper distance matrix
+
 def distanceMatrix(correlationMatrix):
-    calculatedMatrix = np.add(correlationMatrix, 1) #shifts the correlation matrix by 1
-    calculatedMatrix = np.divide(calculatedMatrix, -2) #divides the entire matrix by -2
-    calculatedMatrix = np.add(calculatedMatrix, 1) #subtracts each value from 1
+    calculatedMatrix = np.add(correlationMatrix, 1)  # shifts the correlation matrix by 1
+    calculatedMatrix = np.divide(calculatedMatrix, -2)  # divides the entire matrix by -2
+    calculatedMatrix = np.add(calculatedMatrix, 1)  # subtracts each value from 1
     return calculatedMatrix
 
 def pearsonsCorr():
@@ -281,7 +518,7 @@ def pearsonsCorr():
             pearson[i, j] = corr
             pearson[j, i] = corr
     calculatedPearson = np.round(calculatedPearson, 1)
-    np.savetxt("pearson.csv",pearson, delimiter=",")
+    np.savetxt("pearson.csv", pearson, delimiter=",")
     return pearson
 
 def tauCorr():
@@ -293,40 +530,42 @@ def tauCorr():
             tau[i, j] = corr
             tau[j, i] = corr
     calculatedTau = np.round(calculatedTau, 1)
-    np.savetxt("tau.csv",tau, delimiter=",")
+    np.savetxt("tau.csv", tau, delimiter=",")
     return tau
 
 
-
 extractInfo()
+extractRawInfo()
+rawDelete()
+rawBinMaker()
 D1, D2 = derivativeMaker()
 FLCdictionary(D1, D2)
 processingWrite()
-spearmanMatrix = spearmansCorr()
-spearmanDistanceMatrix = distanceMatrix(spearmanMatrix)
-pearsonsMatrix = pearsonsCorr()
-pearsonsDistanceMatrix = distanceMatrix(pearsonsMatrix)
-minMaxMatrix = minMaxNormalization()
-logRawMatrix = logScaling()
-tauMatrix = tauCorr()
-tauDistanceMatrix = distanceMatrix(tauMatrix)
-hdbProcessing(np.array(preSpearman.astype(float)), "hdbscanPairs_unscaled")
-hdbProcessing(minMaxMatrix, "hdbscanPairs_minmax")
-hdbProcessing(logRawMatrix, "hdbscanPairs_log10")
-hdbProcessing(pearsonsDistanceMatrix, "hdbscanPairs_pearsons")
-hdbProcessing(spearmanDistanceMatrix, "hdbscanPairs_spearman")
-hdbProcessing(tauDistanceMatrix, "hdbscanPairs_tau")
-
-np.savetxt("pearsonDistance.csv", pearsonsDistanceMatrix, delimiter=",")
-np.savetxt("spearmanDistance.csv", spearmanDistanceMatrix, delimiter=",")
-np.savetxt("tauDistance.csv", tauDistanceMatrix, delimiter=",")
-
-#this part is just for testing the accuracy of pearson and spearman clustering
-for row in range(0, preSpearman.shape[0]):
-    plt.clf()
-    plt.plot([1,2,3,4,5], preSpearman[row, :].astype(float))
-    patNumber = open("processed.csv", "r")
-    reader = csv.reader(patNumber)
-    patList = np.array(list(reader))
-    plt.title(patList[row, 0])
-    #plt.savefig(patList[row, 0])
+# spearmanMatrix = spearmansCorr()
+# spearmanDistanceMatrix = distanceMatrix(spearmanMatrix)
+# pearsonsMatrix = pearsonsCorr()
+# pearsonsDistanceMatrix = distanceMatrix(pearsonsMatrix)
+# minMaxMatrix = minMaxNormalization()
+# logRawMatrix = logScaling()
+# tauMatrix = tauCorr()
+# tauDistanceMatrix = distanceMatrix(tauMatrix)
+# hdbProcessing(np.array(preSpearman.astype(float)), "hdbscanPairs_unscaled")
+# hdbProcessing(minMaxMatrix, "hdbscanPairs_minmax")
+# hdbProcessing(logRawMatrix, "hdbscanPairs_log10")
+# hdbProcessing(pearsonsDistanceMatrix, "hdbscanPairs_pearsons")
+# hdbProcessing(spearmanDistanceMatrix, "hdbscanPairs_spearman")
+# hdbProcessing(tauDistanceMatrix, "hdbscanPairs_tau")
+#
+# np.savetxt("pearsonDistance.csv", pearsonsDistanceMatrix, delimiter=",")
+# np.savetxt("spearmanDistance.csv", spearmanDistanceMatrix, delimiter=",")
+# np.savetxt("tauDistance.csv", tauDistanceMatrix, delimiter=",")
+#
+# #this part is just for testing the accuracy of pearson and spearman clustering
+# for row in range(0, preSpearman.shape[0]):
+#     plt.clf()
+#     plt.plot([1,2,3,4,5], preSpearman[row, :].astype(float))
+#     patNumber = open("processed.csv", "r")
+#     reader = csv.reader(patNumber)
+#     patList = np.array(list(reader))
+#     plt.title(patList[row, 0])
+#     #plt.savefig(patList[row, 0])

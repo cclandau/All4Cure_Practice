@@ -1,87 +1,194 @@
-Patient,Condition,          DateOfDiagnosis,LightChain
-MM-4,Multiple Myeloma,12/28/2007 0:00,Lambda
-MM-7,Multiple Myeloma,6/28/2013 0:00,Lambda
-MM-5,Multiple Myeloma,5/17/2016 0:00,Lambda
-MM-29,Multiple Myeloma,12/27/2016 0:00,Lambda
-MM-35,Multiple Myeloma,6/25/2007 0:00,Lambda
-MM-37,Multiple Myeloma,1/10/2004 0:00,Lambda
-MM-22,Multiple Myeloma,2/27/2013 0:00,Lambda
-MM-53,Multiple Myeloma,8/7/2016 0:00,Lambda
-MM-55,Multiple Myeloma,1/30/2008 0:00,Lambda
-MM-9,Multiple Myeloma,1/26/2012 0:00,Lambda
-MM-74,Multiple Myeloma,6/9/2009 0:00,Lambda
-MM-75,Multiple Myeloma,6/15/2015 0:00,Lambda
-MM-77,Multiple Myeloma,3/29/2016 0:00,Lambda
-MM-81,Multiple Myeloma,9/30/2017 0:00,Lambda
-MM-12,Multiple Myeloma,12/22/2010 0:00,Lambda
-MM-187,Multiple Myeloma,3/4/2017 0:00,Lambda
-MM-107,Multiple Myeloma,9/4/2006 0:00,Lambda
-MM-111,Multiple Myeloma,5/4/2015 0:00,Lambda
-MM-143,Multiple Myeloma,5/27/2011 0:00,Lambda
-MM-146,Multiple Myeloma,7/24/2011 0:00,Lambda
-MM-68,Multiple Myeloma,10/25/2006 0:00,Lambda
-MM-158,Multiple Myeloma,6/20/2016 0:00,Lambda
-MM-160,Multiple Myeloma,1/26/2016 0:00,Lambda
-MM-119,Multiple Myeloma,11/18/2015 0:00,Lambda
-MM-161,Multiple Myeloma,11/24/2014 0:00,Lambda
-MM-164,Multiple Myeloma,3/1/2017 0:00,Lambda
-MM-144,Multiple Myeloma,8/2/2016 0:00,Lambda
-MM-165,Multiple Myeloma,2/6/2008 0:00,Lambda
-MM-11,Multiple Myeloma,2/15/2016 0:00,Lambda
-MM-211,Multiple Myeloma,3/30/2017 0:00,Lambda
-MM-215,Multiple Myeloma,3/13/2017 0:00,Lambda
-MM-76,Multiple Myeloma,7/27/2011 0:00,Lambda
-MM-1,Multiple Myeloma,4/6/2015 0:00,Kappa
-MM-43,Multiple Myeloma,1/1/2008 0:00,Kappa
-MM-45,Multiple Myeloma,8/4/2016 0:00,Kappa
-MM-48,Multiple Myeloma,3/23/2010 0:00,Kappa
-MM-49,Multiple Myeloma,1/11/2017 0:00,Kappa
-MM-54,Multiple Myeloma,7/10/2011 0:00,Kappa
-MM-63,,12/27/2011 0:00,Kappa
-MM-67,Multiple Myeloma,11/8/2010 0:00,Kappa
-MM-64,Multiple Myeloma,8/14/2010 0:00,Kappa
-MM-2,Multiple Myeloma,11/3/2014 0:00,Kappa
-MM-80,Multiple Myeloma,8/2/2016 0:00,Kappa
-MM-84,Multiple Myeloma,4/19/2015 0:00,Kappa
-MM-86,Multiple Myeloma,10/14/2010 0:00,Kappa
-MM-122,Multiple Myeloma,11/25/2014 0:00,Kappa
-MM-83,Multiple Myeloma,10/24/2013 0:00,Kappa
-MM-13,Multiple Myeloma,10/18/2012 0:00,Kappa
-MM-192,Multiple Myeloma,12/9/2013 0:00,Kappa
-MM-204,Multiple Myeloma,10/11/2017 0:00,Kappa
-MM-116,Multiple Myeloma,6/11/2017 0:00,Kappa
-MM-120,Multiple Myeloma,9/30/2017 0:00,Kappa
-MM-105,Multiple Myeloma,8/25/2015 0:00,Kappa
-MM-65,Multiple Myeloma,1/9/2015 0:00,Kappa
-MM-70,Multiple Myeloma,5/22/2016 0:00,Kappa
-MM-72,Multiple Myeloma,10/19/2015 0:00,Kappa
-MM-126,Multiple Myeloma,6/26/2017 0:00,Kappa
-MM-40,Multiple Myeloma,1/1/2004 0:00,Kappa
-MM-130,Multiple Myeloma,11/20/2013 0:00,Kappa
-MM-159,Multiple Myeloma,12/24/2014 0:00,Kappa
-MM-3,Multiple Myeloma,4/7/2014 0:00,Kappa
-MM-139,Multiple Myeloma,7/26/2017 0:00,Kappa
-MM-79,Multiple Myeloma,7/26/2002 0:00,Kappa
-MM-142,Multiple Myeloma,7/14/2014 0:00,Kappa
-MM-151,Multiple Myeloma,11/17/2010 0:00,Kappa
-MM-8,Multiple Myeloma,3/24/2015 0:00,Kappa
-MM-10,Multiple Myeloma,10/3/2010 0:00,Kappa
-MM-162,Multiple Myeloma,8/15/2017 0:00,Kappa
-MM-184,Multiple Myeloma,9/6/2012 0:00,Kappa
-MM-95,Multiple Myeloma,8/16/2016 0:00,Kappa
-MM-147,Multiple Myeloma,2/24/2017 0:00,Kappa
-MM-197,Multiple Myeloma,6/3/2013 0:00,Kappa
-MM-6,Multiple Myeloma,3/23/2014 0:00,Kappa
-MM-202,Multiple Myeloma,,Kappa
-MM-14,Multiple Myeloma,1/1/2004 0:00,Kappa
-MM-206,Multiple Myeloma,5/16/2015 0:00,Kappa
-MM-177,Multiple Myeloma,4/22/2016 0:00,Kappa
-MM-209,Multiple Myeloma,5/26/2005 0:00,Kappa
-MM-213,Multiple Myeloma,8/28/2017 0:00,Kappa
-MM-216,Multiple Myeloma,10/5/2009 0:00,Kappa
-MM-52,Multiple Myeloma,2/8/2010 0:00,Kappa
-MM-220,Multiple Myeloma,4/15/2015 0:00,Kappa
-MM-222,Multiple Myeloma,11/3/2017 0:00,Kappa
-MM-225,Multiple Myeloma,7/27/2017 0:00,Kappa
-MM-236,Multiple Myeloma,11/21/2017 0:00,Kappa
-MM-226,Multiple Myeloma,11/9/2017 0:00,Kappa
+Patient,Condition,DateOfDiagnosis,LightChain,IssCategory
+MM-122,Multiple Myeloma,11/25/2014 0:00,Kappa,Smoldering Myeloma
+MM-383,Multiple Myeloma,10/7/2013,Kappa,Stage II
+MM-391,Multiple Myeloma,7/21/2015,Kappa,Stage I
+MM-335,Multiple Myeloma,None,Kappa,None
+MM-484,Multiple Myeloma,10/1/2000 0:00,Kappa,I don't know
+MM-120,Multiple Myeloma,7/1/2010 0:00,Kappa,Smoldering Myeloma
+MM-126,Multiple Myeloma,6/26/2017 0:00,Kappa,Smoldering Myeloma
+MM-79,Multiple Myeloma,7/26/2002 0:00,Kappa,I don't know
+MM-142,Multiple Myeloma,7/14/2014 0:00,Kappa,Stage III
+MM-10,Multiple Myeloma,10/3/2010 0:00,Kappa,Smoldering Myeloma
+MM-174,Multiple Myeloma,8/15/2007 0:00,Kappa,I don't know
+MM-147,Multiple Myeloma,2/24/2017 0:00,Kappa,I don't know
+MM-6,Multiple Myeloma,3/23/2014 0:00,Kappa,Smoldering Myeloma
+MM-52,Multiple Myeloma,3/24/2010 0:00,Kappa,Stage I
+MM-236,Multiple Myeloma,11/21/2017 0:00,Kappa,Smoldering Myeloma
+MM-226,Multiple Myeloma,11/9/2017 0:00,Kappa,Stage II
+MM-260,multiple myeloma,1/30/2003,Kappa,Stage I
+MM-265,Multiple Myeloma,9/19/2013 0:00,Kappa,Stage III
+MM-222,Multiple Myeloma,11/3/2017 0:00,Kappa,I don't know
+MM-282,Multiple Myeloma,2/15/2017,Kappa,Stage I
+MM-278,Multiple Myeloma,11/10/2017 0:00,Kappa,Stage III
+MM-292,Multiple Myeloma,10/12/2016 0:00,Kappa,Smoldering Myeloma
+MM-293,Multiple Myeloma,8/6/2015,Kappa,Stage III
+MM-40,Multiple Myeloma,12/14/2011 0:00,Kappa,Stage III
+MM-299,Multiple Myeloma,1/1/2013,Kappa,Stage III
+MM-243,Multiple Myeloma,4/19/2016 0:00,Kappa,Stage III
+MM-276,Multiple Myeloma,10/6/2014,Kappa,I don't know
+MM-301,Multiple Myeloma,9/9/2004,Kappa,I don't know
+MM-267,Multiple Myeloma,8/10/2016 0:00,Kappa,Stage I
+MM-3,Multiple Myeloma,4/7/2014 0:00,Kappa,Stage I
+MM-72,Multiple Myeloma,10/19/2015 0:00,Kappa,Stage I
+MM-209,Multiple Myeloma,5/26/2005 0:00,Kappa,Stage III
+MM-225,Multiple Myeloma,7/27/2017 0:00,Kappa,Stage II
+MM-325,Multiple Myeloma,6/23/2013,Kappa,Stage III
+MM-346,Multiple Myeloma,1/1/2018,Kappa,Stage II
+MM-349,Multiple Myeloma,5/15/2017,Kappa,Stage II
+MM-377,Multiple Myeloma,12/22/2010 0:00,Kappa,Stage III
+MM-420,Multiple Myeloma,10/23/2014,Kappa,None
+MM-451,Multiple Myeloma,7/20/2017,Kappa,Stage I
+MM-455,Multiple Myeloma,9/21/2012,Kappa,Stage I
+MM-357,Multiple Myeloma,2/9/2018 0:00,Kappa,Smoldering Myeloma
+MM-459,Multiple Myeloma,8/24/2011,Kappa,Stage I
+MM-330,Multiple Myeloma,1/28/2005,Kappa,I don't know
+MM-477,multiple myeloma,1/10/2012,Kappa,Stage I
+MM-406,Multiple Myeloma,2/28/2013 0:00,Kappa,Stage III
+MM-364,Multiple Myeloma,9/17/2014,Kappa,Smoldering Myeloma
+MM-2,Multiple Myeloma,11/3/2014 0:00,Kappa,Stage III
+MM-64,Multiple Myeloma,8/14/2010 0:00,Kappa,Stage II
+MM-65,Multiple Myeloma,1/9/2015 0:00,Kappa,
+MM-49,Multiple Myeloma,1/11/2017 0:00,Kappa,Stage II
+MM-67,Multiple Myeloma,11/8/2010 0:00,Kappa,Stage III
+MM-84,Multiple Myeloma,4/19/2015 0:00,Kappa,Stage III
+MM-43,Multiple Myeloma,1/1/2008 0:00,Kappa,I don't know
+MM-86,Multiple Myeloma,10/14/2010 0:00,Kappa,I don't know
+MM-8,Multiple Myeloma,3/24/2015 0:00,Kappa,Stage II
+MM-70,Multiple Myeloma,5/22/2016 0:00,Kappa,Stage III
+MM-48,Multiple Myeloma,3/23/2010 0:00,Kappa,Stage I
+MM-139,Multiple Myeloma,7/26/2017 0:00,Kappa,Stage II
+MM-116,Multiple Myeloma,6/11/2017 0:00,Kappa,Stage I
+MM-80,Multiple Myeloma,8/2/2016 0:00,Kappa,Stage II
+MM-130,Multiple Myeloma,11/20/2013 0:00,Kappa,
+MM-45,Multiple Myeloma,8/4/2016 0:00,Kappa,Stage II
+MM-95,Multiple Myeloma,8/31/2016 0:00,Kappa,Stage III
+MM-263,Multiple Myeloma,1/5/2017 0:00,Kappa,I don't know
+MM-103,Multiple Myeloma,1/2/2017 0:00,Kappa,Stage II
+MM-192,Multiple Myeloma,12/9/2013 0:00,Kappa,Stage II
+MM-184,Multiple Myeloma,9/6/2012 0:00,Kappa,Stage II
+MM-220,Multiple Myeloma,6/5/2015 0:00,Kappa,I don't know
+MM-83,Multiple Myeloma,10/24/2013 0:00,Kappa,I don't know
+MM-206,Multiple Myeloma,5/16/2015 0:00,Kappa,Stage I
+MM-177,Multiple Myeloma,4/22/2016 0:00,Kappa,I don't know
+MM-204,Multiple Myeloma,3/3/2014 0:00,Kappa,
+MM-105,Multiple Myeloma,8/25/2015 0:00,Kappa,
+MM-213,Multiple Myeloma,8/28/2017 0:00,Kappa,Stage III
+MM-159,Multiple Myeloma,12/24/2014 0:00,Kappa,Stage III
+MM-13,Multiple Myeloma,10/18/2012 0:00,Kappa,Stage II
+MM-315,Multiple Myeloma,4/24/2014,Kappa,Stage III
+MM-176,Multiple Myeloma,9/21/2011 0:00,Kappa,Stage I
+MM-152,Multiple Myeloma,2/10/2014 0:00,Kappa,Stage I
+MM-232,Multiple Myeloma,10/6/2017 0:00,Kappa,Stage II
+MM-216,Multiple Myeloma,10/5/2009 0:00,Kappa,Stage II
+MM-337,Multiple Myeloma,9/24/2012 0:00,Kappa,Stage I
+MM-1,Multiple Myeloma,4/6/2015 0:00,Kappa,Stage I
+MM-266,Multiple Myeloma,2/12/2016 0:00,Kappa,None
+MM-353,Multiple Myeloma,12/8/2017 0:00,Kappa,I don't know
+MM-365,Multiple Myeloma,9/21/2014,Kappa,Stage I
+MM-316,Multiple Myeloma,2/12/2016 0:00,Kappa,Stage I
+MM-336,Multiple Myeloma,1/3/2011 0:00,Kappa,Stage I
+MM-396,Multiple Myeloma,1/6/2016 0:00,Kappa,Stage I
+MM-397,Multiple Myeloma,None,Kappa,Stage II
+MM-402,Multiple Myeloma,7/9/2013 0:00,Kappa,Stage II
+MM-404,Multiple Myeloma,7/15/2008,Kappa,Stage I
+MM-415,Multiple Myeloma,12/21/2017 0:00,Kappa,Stage I
+MM-429,Multiple Myeloma,12/12/2012,Kappa,Stage I
+MM-430,Multiple Myeloma,7/1/2015,Kappa,Stage III
+MM-433,Multiple Myeloma,10/1/2015,Kappa,Stage II
+MM-318,Multiple Myeloma,10/19/2017 0:00,Kappa,Stage I
+MM-439,Multiple Myeloma,8/12/2011,Kappa,Stage II
+MM-245,Multiple Myeloma,7/2/2007 0:00,Kappa,Stage I
+MM-449,Multiple Myeloma,6/1/2015,Kappa,None
+MM-395,Multiple Myeloma,7/14/2017 0:00,Kappa,Smoldering Myeloma
+MM-308,Multiple Myeloma,10/28/2014 0:00,Kappa,Stage II
+MM-309,Multiple Myeloma,4/8/2017 0:00,Kappa,I don't know
+MM-151,Multiple Myeloma,5/1/2015 0:00,Kappa,Stage III
+MM-361,Multiple Myeloma,4/15/2015 0:00,Kappa,I don't know
+MM-199,Multiple Myeloma,7/3/2017 0:00,Kappa,Stage III
+MM-162,Multiple Myeloma,8/15/2017 0:00,Kappa,Stage II
+MM-305,Multiple Myeloma,1/15/2015 0:00,Kappa,Stage II
+MM-54,Multiple Myeloma,7/10/2011 0:00,Kappa,I don't know
+MM-197,Multiple Myeloma,6/3/2013 0:00,Kappa,Stage III
+MM-445,Multiple Myeloma,5/18/2017 0:00,Kappa,Stage II
+MM-279,Multiple Myeloma,4/6/2017 0:00,Kappa,Stage I
+MM-333,Multiple Myeloma,9/24/2015 0:00,Kappa,Smoldering Myeloma
+MM-460,Multiple Myeloma,4/9/2010 0:00,Kappa,None
+MM-326,Multiple Myeloma,1/1/2011 0:00,Kappa,None
+MM-411,Multiple Myeloma,4/11/2014,Kappa,Stage III
+MM-378,Multiple Myeloma,11/25/2014 0:00,Kappa,Smoldering Myeloma
+MM-454,Multiple Myeloma,5/21/2017 0:00,Kappa,Stage III
+MM-373,Multiple Myeloma,1/22/2018 0:00,Kappa,Stage II
+MM-334,Multiple Myeloma,1/12/2016 0:00,Kappa,Stage I
+MM-202,Multiple Myeloma,8/30/2016 0:00,Kappa,Stage II
+MM-185,Multiple Myeloma,4/22/2015 0:00,Kappa,Stage II
+MM-269,Multiple Myeloma,12/1/2013 0:00,Kappa,Smoldering Myeloma
+MM-190,Multiple Myeloma,11/8/2012 0:00,Kappa,Stage II
+MM-374,Multiple Myeloma,9/13/2017 0:00,Kappa,I don't know
+MM-403,Multiple Myeloma,12/1/2014,Kappa,Stage II
+MM-14,Multiple Myeloma,1/1/2004 0:00,Kappa,Stage I
+MM-53,Multiple Myeloma,8/7/2016 0:00,Lambda,
+MM-81,Multiple Myeloma,9/30/2017 0:00,Lambda,
+MM-277,Multiple Myeloma,2/11/2011,Lambda,Stage III
+MM-9,Multiple Myeloma,1/26/2012 0:00,Lambda,Stage I
+MM-111,Multiple Myeloma,5/4/2015 0:00,Lambda,Stage I
+MM-119,Multiple Myeloma,11/18/2015 0:00,Lambda,Smoldering Myeloma
+MM-165,Multiple Myeloma,2/6/2008 0:00,Lambda,Stage I
+MM-207,Multiple Myeloma,4/7/2017 0:00,Lambda,Stage I
+MM-76,Multiple Myeloma,7/27/2011 0:00,Lambda,I don't know
+MM-259,Multiple Myeloma,1/20/2014,Lambda,Stage II
+MM-285,Multiple Myeloma,4/20/2011,Lambda,Stage III
+MM-29,Multiple Myeloma,12/27/2016 0:00,Lambda,Stage I
+MM-37,Multiple Myeloma,1/10/2004 0:00,Lambda,I don't know
+MM-143,Multiple Myeloma,5/27/2011 0:00,Lambda,Stage II
+MM-244,Multiple Myeloma,3/16/2017 0:00,Lambda,I don't know
+MM-7,Multiple Myeloma,6/28/2013 0:00,Lambda,Stage III
+MM-11,Multiple Myeloma,10/7/2016 0:00,Lambda,Stage I
+MM-352,Multiple Myeloma,11/15/2017,Lambda,Stage I
+MM-381,Multiple Myeloma,8/2/2014,Lambda,Stage I
+MM-393,Multiple Myeloma,8/16/2016,Lambda,Smoldering Myeloma
+MM-461,Multiple Myeloma,9/13/2012 0:00,Lambda,Stage III
+MM-468,Multiple Myeloma,6/6/2017,Lambda,Smoldering Myeloma
+MM-372,Multiple Myeloma,5/1/2017 0:00,Lambda,Smoldering Myeloma
+MM-187,Multiple Myeloma,3/4/2017 0:00,Lambda,Stage III
+MM-55,Multiple Myeloma,1/30/2008 0:00,Lambda,
+MM-77,Multiple Myeloma,3/29/2016 0:00,Lambda,Stage I
+MM-146,Multiple Myeloma,7/24/2011 0:00,Lambda,Stage I
+MM-5,Multiple Myeloma,5/17/2016 0:00,Lambda,Stage III
+MM-4,Multiple Myeloma,12/28/2007 0:00,Lambda,Stage I
+MM-158,Multiple Myeloma,6/20/2016 0:00,Lambda,Stage III
+MM-160,Multiple Myeloma,1/26/2016 0:00,Lambda,Stage III
+MM-74,Multiple Myeloma,6/9/2009 0:00,Lambda,Stage III
+MM-144,Multiple Myeloma,8/2/2016 0:00,Lambda,Stage II
+MM-75,Multiple Myeloma,6/15/2015 0:00,Lambda,Stage III
+MM-107,Multiple Myeloma,9/4/2006 0:00,Lambda,I don't know
+MM-164,Multiple Myeloma,3/29/2016 0:00,Lambda,Stage I
+MM-12,Multiple Myeloma,12/22/2010 0:00,Lambda,Stage II
+MM-161,Multiple Myeloma,11/24/2014 0:00,Lambda,Stage III
+MM-211,Multiple Myeloma,3/30/2017 0:00,Lambda,Stage I
+MM-304,Multiple Myeloma,11/1/2017 0:00,Lambda,Stage III
+MM-22,Multiple Myeloma,2/27/2013 0:00,Lambda,
+MM-149,Multiple Myeloma,8/22/2011 0:00,Lambda,Stage I
+MM-215,Multiple Myeloma,4/13/2015 0:00,Lambda,Stage I
+MM-68,Multiple Myeloma,10/25/2006 0:00,Lambda,Stage III
+MM-35,Multiple Myeloma,6/25/2007 0:00,Lambda,Stage III
+MM-180,Multiple Myeloma,12/7/2007 0:00,Lambda,Stage I
+MM-347,Multiple Myeloma,4/17/2012,Lambda,Stage III
+MM-385,Multiple Myeloma,7/31/2014,Lambda,Stage III
+MM-417,Multiple Myeloma,6/15/2017,Lambda,Smoldering Myeloma
+MM-436,Multiple Myeloma,9/2/2014,Lambda,Stage II
+MM-440,Multiple Myeloma,2/14/2014,Lambda,Stage II
+MM-328,Multiple Myeloma,3/1/2013 0:00,Lambda,Stage I
+MM-252,Multiple Myeloma,2/6/2017 0:00,Lambda,Stage III
+MM-351,Multiple Myeloma,3/14/2014,Lambda,None
+MM-354,Multiple Myeloma,5/13/2017 0:00,Lambda,Stage I
+MM-438,Multiple Myeloma,1/5/2016 0:00,Lambda,Stage II
+MM-452,Multiple Myeloma,1/11/2018 0:00,Lambda,Stage III
+MM-327,Multiple Myeloma,1/27/2017,Lambda,Smoldering Myeloma
+MM-284,Multiple Myeloma,12/30/2013,Lambda,Stage III
+MM-331,Multiple Myeloma,5/6/2014 0:00,Lambda,Smoldering Myeloma
+MM-332,Multiple Myeloma,11/3/2015 0:00,Lambda,Stage III
+MM-456,Multiple Myeloma,5/13/2016 0:00,Lambda,Stage III
+MM-227,Multiple Myeloma,2/1/2016 0:00,Lambda,Stage I
+MM-380,Multiple Myeloma,3/22/2013 0:00,Lambda,Stage I
+MM-474,Multiple Myeloma,7/5/2016 0:00,Lambda,Stage II
+MM-367,Multiple Myeloma,1/19/2018,Lambda,Smoldering Myeloma
