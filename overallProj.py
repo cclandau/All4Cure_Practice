@@ -23,7 +23,7 @@ from sympy.polys.polytools import intervals
 from docutils.writers.docutils_xml import RawXmlError
 import os
 #from scipy.io.arff.tests.test_arffread import DataTest
-np.set_printoptions(threshold=np.nan)
+np.set_printoptions(threshold=np.inf)
 
 # # Global Variable, setting the number of data points we initially look at to 5
 numberOfPoints = 5
@@ -182,8 +182,6 @@ def rawDelete():
                 csvfile.write(str(v[1]) + " ")
             csvfile.write('\n')
 
-    print("written")
-
 def rawBinMaker():
     ## MAP
     ## KEY = MM-
@@ -206,7 +204,7 @@ def rawBinMaker():
                 allTests.append(v[0])
                 allDates.append(str(v[1]))
                 index = index + 1
-        outerDict[eachKey] = properSampleMaker(eachKey, allTests, allDates) #patientBinCreator(eachKey, allTests, allDates)
+        outerDict[eachKey] = properSampleMaker(eachKey, allTests, allDates) 
     print("Went through all patients, printing outer Dictionary NOW")
     with open("rawValuesBins_1.csv", "w", newline='') as csvfile:
         for x in outerDict:
@@ -232,11 +230,88 @@ def properSampleMaker(patientID, FLC_Value, Date):
     finalData = downSample.reset_index()
     finalData = finalData.values
     innerDict = {}
+    datesForTreat = []
+    if (patientID == 'MM-120'):
+#         with open('MM120_test.csv', 'w', newline='') as csvfile:
+#             csvfile.write('\n'.join('{}, {}, {}'.format(resample[x], interpolated[x], downSample[x]) for x in range(0, len(interpolated.values))))
+        print("Original")
+        print(df)
+        print("Daily Upsample")
+        print(resample)
+        print("Interpolating Daily")
+        print(interpolated)
+        print("Down Sample 28 Day Interpolation")
+        print(downSample)
+    
     for x in range(len(finalData) - 1):
-        innerDict[x] = [finalData[x, 0].to_pydatetime().strftime('%Y-%m-%d'), round(finalData[x, 1], 2)]
+        #treatmentArray = treatmentAdder(finalData[:, 0], np.array(treatDict[patientID]), len(finalData) - 1, patientID)
+        innerDict[x] = [finalData[x, 0].to_pydatetime().strftime('%Y-%m-%d'), round(finalData[x, 1], 2)] # Date, FLC
+        datesForTreat.append(finalData[x, 0].to_pydatetime().strftime('%Y-%m-%d'))
+    treatMatrix = tryTreatment(datesForTreat, patientID)
     return innerDict
 
+def treatmentAdder(workingArray, patientsArray, arraySize, patient):
+#     print("working")
+#     print(workingArray) # date time objects, binDates[]
+#     print("patient")
+#     print(patientsArray) # Drug Name, Date time object
 
+    dateMed = {}
+    startDate = patientsArray[0, 1]
+    #for x in range(0, arraySize):
+    dateMed[0] = set()
+    dateMed[0].add(0)
+    for i in range(0, patientsArray.shape[0]):
+        treatment = patientsArray[i, 0]
+        currDate = patientsArray[i, 1]
+        for j in range(1, arraySize):
+            if currDate >= workingArray[j-1] and currDate < workingArray[j]:
+                if j not in dateMed.keys():
+                    dateMed[j] = set()
+                if(treatment == 'Lenalidomide'):
+                    dateMed[j].add(1)
+                elif(treatment == 'Bortezomib'):
+                    dateMed[j].add(2)
+                elif(treatment == 'Carfilzomib'):
+                    dateMed[j].add(3)
+                elif(treatment == 'Dexamethasone'):
+                    dateMed[j].add(4)
+                elif(treatment == 'Pomalidomide'):
+                    dateMed[j].add(5)
+                elif(treatment == 'Thalidomide'):
+                    dateMed[j].add(6)
+                elif(treatment == 'Cyclophosphamide'):
+                    dateMed[j].add(7)
+                elif(treatment == 'Melphalan'):
+                    dateMed[j].add(8)
+                elif(treatment == 'Prednisone'):
+                    dateMed[j].add(9)
+                elif(treatment == 'Ixazomib'):
+                    dateMed[j].add(10)
+                elif(treatment == 'Cisplatin'):
+                    dateMed[j].add(11)
+                elif(treatment == 'Doxorubicin'):
+                    dateMed[j].add(12)
+                elif(treatment == 'Etoposide'):
+                    dateMed[j].add(13)
+                elif(treatment == 'Vincristine'):
+                    dateMed[j].add(14)
+                elif(treatment == 'Daratumumab'):
+                    dateMed[j].add(15)
+                elif(treatment == 'Elotuzumab'):
+                    dateMed[j].add(16)
+                elif(treatment == 'Bendamustine'):
+                    dateMed[j].add(17)
+                elif(treatment == 'Panobinostat'):
+                    dateMed[j].add(18)
+                elif(treatment == 'Venetoclax'):
+                    dateMed[j].add(19)
+                elif(treatment == 'CAR-T'):
+                    dateMed[j].add(20)
+                else:
+                    dateMed[j].add(-1)
+    print(dateMed)
+    return patientsArray
 def patientBinCreator(patientID, FLC_Value, Date):
     #innerDict = {'0' : ['test initial'], '1' : ['a', 'b', 'c']}
     for x in range(0, len(Date)):
@@ -578,7 +653,12 @@ def tauCorr():
     np.savetxt("tau.csv", tau, delimiter=",")
     return tau
 
+def tryTreatment(Dates, Patient):
+    print(Dates)
+    return Dates
+
 def treatCombDict():
+    global treatCombDict
     treatCombDict = {}
     try:
         os.remove('treatmentSequence.csv')
@@ -678,10 +758,10 @@ extractInfo()
 extractRawInfo()
 rawDelete()
 rawBinMaker()
-D1, D2 = derivativeMaker()
-FLCdictionary(D1, D2)
-processingWrite()
-treatCombDict()
+# D1, D2 = derivativeMaker()
+# FLCdictionary(D1, D2)
+# processingWrite()
+#treatCombDict()
 # spearmanMatrix = spearmansCorr()
 # spearmanDistanceMatrix = distanceMatrix(spearmanMatrix)
 # pearsonsMatrix = pearsonsCorr()
