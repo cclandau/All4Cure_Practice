@@ -3,7 +3,9 @@
 from getTreatments import getTreatments
 from getVectors import getVectors
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
+from pandas import datetime
 from datetime import datetime, date, time, timedelta
 import math
 from scipy import stats
@@ -19,6 +21,7 @@ from astropy.wcs.docstrings import row
 from sympy.polys.partfrac import apart
 from sympy.polys.polytools import intervals
 from docutils.writers.docutils_xml import RawXmlError
+import os
 #from scipy.io.arff.tests.test_arffread import DataTest
 np.set_printoptions(threshold=np.nan)
 
@@ -126,6 +129,14 @@ def extractRawInfo():
                 csvfile.write(str(v[1]) + " ")
             csvfile.write('\n')
 
+    with open("treatmentDictionary.csv", "w") as csvfile:
+        for key,value in treatDict.items():
+            csvfile.write(key + ': ')
+            for v in value:
+                csvfile.write(v[0] + ", ")
+                csvfile.write(str(v[1]) + " ")
+            csvfile.write('\n')
+
 def rawDelete():
     for i in dataTest.keys():
         temp = dataTest[i]
@@ -185,28 +196,51 @@ def rawBinMaker():
         allTests = []
         allDates = []
         print("About to make inner dictionary for: " + eachKey)
-        print(value)
+        index = 0;
         for v in value:
-            allTests.append(v[0])
-            allDates.append(str(v[1]))
-        outerDict[eachKey] = patientBinCreator(eachKey, allTests, allDates)
+            if (str(v[1])) in allDates:
+                print("replacing FLC VALUE " + allTests[index - 1] + " on " + allDates[index - 1] + " with " + v[0] + " from " + str(v[1]) + " for patient " + eachKey)
+                allTests[index - 1] = v[0]
+                allDates[index - 1] = str(v[1])
+            else:
+                allTests.append(v[0])
+                allDates.append(str(v[1]))
+                index = index + 1
+        outerDict[eachKey] = properSampleMaker(eachKey, allTests, allDates) #patientBinCreator(eachKey, allTests, allDates)
     print("Went through all patients, printing outer Dictionary NOW")
     with open("rawValuesBins_1.csv", "w", newline='') as csvfile:
         for x in outerDict:
-            print(x)
+            #print(x)
+            # X is the Patient ID number
             csvfile.write(x)
             csvfile.write("\n")
             for y in outerDict[x]:
-                csvfile.write(" " + str(y) + " : " + str(outerDict[x][y]))
+                temp = str(outerDict[x][y]).strip("'[]")
+                csvfile.write("Bin: " + str(y) + ", " + temp.replace("'", ""))
                 csvfile.write("\n")
-                print(y, ' : ' , outerDict[x][y])
+                #print(y, ' : ' , outerDict[x][y])
+
+def properSampleMaker(patientID, FLC_Value, Date):
+    dataDict = {'Date': Date, 'FLC_Value': FLC_Value}
+    df = pd.DataFrame(dataDict, columns = ['Date', 'FLC_Value'])
+    df = df.set_index(pd.DatetimeIndex(df['Date']))
+    del df['Date']
+    df['FLC_Value'] = df['FLC_Value'].apply(pd.to_numeric, errors='coerce')
+    resample = df.resample('D').mean()
+    interpolated = resample.interpolate(method='linear')
+    downSample = interpolated.resample('28D').mean()
+    finalData = downSample.reset_index()
+    finalData = finalData.values
+    innerDict = {}
+    for x in range(len(finalData) - 1):
+        innerDict[x] = [finalData[x, 0].to_pydatetime().strftime('%Y-%m-%d'), round(finalData[x, 1], 2)]
+    return innerDict
+
 
 def patientBinCreator(patientID, FLC_Value, Date):
     #innerDict = {'0' : ['test initial'], '1' : ['a', 'b', 'c']}
-    print(type(Date[0]))
     for x in range(0, len(Date)):
         Date[x] = datetime.strptime(Date[x], '%Y-%m-%d').date()
-        print(x)
     innerDict = {}
     innerDict[0] = [FLC_Value[0], Date[0]]
     binNumber = 0
@@ -214,30 +248,40 @@ def patientBinCreator(patientID, FLC_Value, Date):
     for dateInstance in range(1, len(Date) - 1):
         timeDiff = Date[dateInstance] - dateToCompare
         timeDifference = timeDiff.days
-        print(timeDifference)
+        # If it's within 21 to 35 days from the previous date marker, put in current bin
         if (timeDifference > 21 and timeDifference < 35):
             if (binNumber == 0):
                 binNumber = 1
-            print("within range for " + str(binNumber) + " bin!")
             if (binNumber in innerDict):
-                print("ADDING TO EXISTING BIN")
                 innerDict[binNumber].extend([FLC_Value[dateInstance], Date[dateInstance]])
             else:
                 innerDict[binNumber] = [FLC_Value[dateInstance], Date[dateInstance]]
-            print(innerDict[binNumber])
+        # Time difference between current point and date to compare falls outside of the bin range,
+        # increase the bin number by one, and later fill that bin with an interpolated (linear) value
         elif (timeDifference > 35):
-            print("Not within range, starting bin number " + str(binNumber) + "!")
             binNumber = binNumber + 1
+            #print("Not within range, starting bin number " + str(binNumber) + "!")
+            treatmentsArray = treatDict[patientID]
+            currentTreat = []
+            oldTreat = []
+            for x in range(0, len(treatmentsArray) - 1):
+                # Wait to actually update dateToCompare so we can easily fill oldTreat array
+                dateInterest = treatmentsArray[x][1] - dateToCompare + timedelta(days=28)
+                dateInt = dateInterest.days
+                if (dateInt > 21 and dateInt < 35):
+                    if (treatmentsArray[x][0] not in currentTreat):
+                        currentTreat.append(treatmentsArray[x][0])
+                if (timeDifference > 21 and timeDifference < 35):
+                    if (treatmentsArray[x][0] not in oldTreat):
+                        oldTreat.append(treatmentsArray[x][0])
             dateToCompare = dateToCompare + timedelta(days=28)
             if (binNumber in innerDict):
-                print("ADDING TO EXISTING BIN")
-                innerDict[binNumber].extend([FLC_Value[dateInstance], Date[dateInstance]])
+                innerDict[binNumber].extend(["-1", dateToCompare])
             else:
-                innerDict[binNumber] = [FLC_Value[dateInstance], Date[dateInstance]]
-            print(innerDict[binNumber])
+                innerDict[binNumber] = ["-1", dateToCompare]
         else:
-            print("Too small for range, delete this item")
-            print(str(timeDifference))
+#             print("Too small for range, delete this item")
+#             print(str(timeDifference))
             pass
     print(innerDict)
     print("About to return to rawBinMaker")
@@ -536,6 +580,10 @@ def tauCorr():
 
 def treatCombDict():
     treatCombDict = {}
+    try:
+        os.remove('treatmentSequence.csv')
+    except OSError:
+        pass
     for key in outerDict:
         patientsArray = np.array(treatDict[key])
         treatCombDict[key] = {}
@@ -548,8 +596,8 @@ def treatCombDict():
         foundBeginning = None
         for innerKey in innerDict:
             innerList = innerDict[innerKey]
-            binDates.append(innerList[1])
-            if(foundBeginning != True and innerList[1] >= startDate):
+            binDates.append(datetime.strptime(innerList[0], '%Y-%m-%d').date())
+            if(foundBeginning != True and datetime.strptime(innerList[0], '%Y-%m-%d').date() >= startDate):
                 binNum = int(innerKey)
                 foundBeginning = True
         temp[0] = set()
