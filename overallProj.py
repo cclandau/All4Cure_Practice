@@ -19,7 +19,7 @@ from astropy.wcs.docstrings import row
 from sympy.polys.partfrac import apart
 from sympy.polys.polytools import intervals
 from docutils.writers.docutils_xml import RawXmlError
-from scipy.io.arff.tests.test_arffread import DataTest
+#from scipy.io.arff.tests.test_arffread import DataTest
 np.set_printoptions(threshold=np.nan)
 
 # # Global Variable, setting the number of data points we initially look at to 5
@@ -48,11 +48,11 @@ def extractRawInfo():
         for i in range(1, patList.shape[0]):
             # KEY = MM-# VALUE = whether they are Kappa or Lambda
             patDict[patList[i][0]] = patList[i][3]
-        
+
     with open("raw_KappaFLC.csv", "r") as rawKappaData:
         reader = csv.reader(rawKappaData)
         rawKapFLC = np.array(list(reader))
-    
+
     with open("raw_LambdaFLC.csv", "r") as rawLambdaData:
         reader = csv.reader(rawLambdaData)
         rawLamFLC = np.array(list(reader))
@@ -61,7 +61,7 @@ def extractRawInfo():
     rawLamFLC = np.delete(rawLamFLC, np.s_[0], axis = 0)
     rawKapFLC = np.delete(rawKapFLC, np.s_[3,4], axis = 1)
     rawLamFLC = np.delete(rawLamFLC, np.s_[3,4], axis = 1)
-    
+
     #Loop through Kappa patient records, deleting any records of Lambda patients
     #At the same time, read the date into a list of datetime objects for better use
     temp1 = 0
@@ -82,7 +82,7 @@ def extractRawInfo():
                     rawKapFLC[temp1][2] = rawKapFLC[temp1][2][0:3] + "0" + rawKapFLC[temp1][2][3:]
                 else:
                     rawKapFLC[temp1][2] = "0" + rawKapFLC[temp1][2]
-            rawKapDates.append(datetime.strptime(rawKapFLC[temp1][2], '%Y-%m-%d').date()) 
+            rawKapDates.append(datetime.strptime(rawKapFLC[temp1][2], '%Y-%m-%d').date())
             temp1 = temp1 + 1
 
     #Do the same thing for the Lambda patient records
@@ -93,21 +93,21 @@ def extractRawInfo():
             rawLamFLC[temp2][2] = rawLamFLC[temp2][2].replace(" 00:00:00", "")
             rawLamDates.append(datetime.strptime(rawLamFLC[temp2][2], '%Y-%m-%d').date())
             temp2 = temp2 + 1
-    
+
     rawKapDates = np.array(rawKapDates)
     rawLamDates = np.array(rawLamDates)
-    
-   
+
+
 
     global raw_X
     raw_X = np.concatenate((rawKapFLC, rawLamFLC), axis=0)
-    
+
     global raw_dates
-    raw_dates = np.concatenate((rawKapDates, rawLamDates), axis=0)    
-    
+    raw_dates = np.concatenate((rawKapDates, rawLamDates), axis=0)
+
     global dataTest
     dataTest = {}
-    
+
     ## PATIENT, FLC VALUE, TEST DATE
     ## N X M MATRIX = ROWS X COLUMNS
     for i in range(0, raw_X.shape[0]):
@@ -116,24 +116,24 @@ def extractRawInfo():
             dataTest[raw_X[i][0]].append([raw_X[i][1], raw_dates[i]])
         else: # add to dictionary
             dataTest[raw_X[i][0]] = []
-            dataTest[raw_X[i][0]].append([raw_X[i][1], raw_dates[i]])      
-    
-    with open("rawValuesMatrix.csv", "w") as csvfile:        
+            dataTest[raw_X[i][0]].append([raw_X[i][1], raw_dates[i]])
+
+    with open("rawValuesMatrix.csv", "w") as csvfile:
         for key,value in dataTest.items():
             csvfile.write(key + ': ')
             for v in value:
-                csvfile.write(v[0] + ", ")             
+                csvfile.write(v[0] + ", ")
                 csvfile.write(str(v[1]) + " ")
             csvfile.write('\n')
-    
+
 def rawDelete():
     for i in dataTest.keys():
         temp = dataTest[i]
         dataTest[i] = sorted(temp, key=lambda temp_entry: temp_entry[1])
-    
+
     keysToDelete = []
     smolderingRawPatientsDict = {}
-    
+
     for i in dataTest.keys():
         tempFLC = dataTest[i]
         if((tempFLC[np.array(dataTest[i]).shape[0] - 1][1] - tempFLC[0][1]).days <= 180):
@@ -162,44 +162,45 @@ def rawDelete():
                     # print("good patient: " + i)
     for i in keysToDelete:
         del dataTest[i]
-    
-    with open("rawValuesFilter_1.csv", "w") as csvfile:        
+
+    with open("rawValuesFilter_1.csv", "w") as csvfile:
         for key,value in dataTest.items():
             csvfile.write(key + ': ')
             for v in value:
-                csvfile.write(v[0] + ", ")             
+                csvfile.write(v[0] + ", ")
                 csvfile.write(str(v[1]) + " ")
             csvfile.write('\n')
-    
+
     print("written")
-    
+
 def rawBinMaker():
     ## MAP
     ## KEY = MM-
     ## VALUE = DICTIONARY => KEY = NUMBER OF WEEKS - (3->5)*N
     ##                       VALUE = LIST OF FLC VALUES IN THAT TIME FRAME
+    global outerDict
     outerDict = {}
     weekCounter = 1
-    for eachKey, value in dataTest.items(): 
-        allTests = [] 
+    for eachKey, value in dataTest.items():
+        allTests = []
         allDates = []
         print("About to make inner dictionary for: " + eachKey)
         print(value)
-        for v in value:            
+        for v in value:
             allTests.append(v[0])
             allDates.append(str(v[1]))
         outerDict[eachKey] = patientBinCreator(eachKey, allTests, allDates)
     print("Went through all patients, printing outer Dictionary NOW")
     with open("rawValuesBins_1.csv", "w", newline='') as csvfile:
         for x in outerDict:
-            print(x)            
+            print(x)
             csvfile.write(x)
             csvfile.write("\n")
             for y in outerDict[x]:
                 csvfile.write(" " + str(y) + " : " + str(outerDict[x][y]))
                 csvfile.write("\n")
                 print(y, ' : ' , outerDict[x][y])
-    
+
 def patientBinCreator(patientID, FLC_Value, Date):
     #innerDict = {'0' : ['test initial'], '1' : ['a', 'b', 'c']}
     print(type(Date[0]))
@@ -210,7 +211,7 @@ def patientBinCreator(patientID, FLC_Value, Date):
     innerDict[0] = [FLC_Value[0], Date[0]]
     binNumber = 0
     dateToCompare = Date[0]
-    for dateInstance in range(1, len(Date) - 1): 
+    for dateInstance in range(1, len(Date) - 1):
         timeDiff = Date[dateInstance] - dateToCompare
         timeDifference = timeDiff.days
         print(timeDifference)
@@ -239,10 +240,10 @@ def patientBinCreator(patientID, FLC_Value, Date):
             print(str(timeDifference))
             pass
     print(innerDict)
-    print("About to return to rawBinMaker")    
+    print("About to return to rawBinMaker")
     return innerDict
 
-    
+
 def derivativeMaker():
     # Create first derivative column
     D1 = np.zeros((len(X), 1))
@@ -400,8 +401,8 @@ def processingWrite():
                 numReadings = numReadings - lengthSegment + 1
                 counter += 1
     preSpearman = np.array(preSpearman)
-    preSpearmanNum = np.array(preSpearman.astype(float))                 
-                
+    preSpearmanNum = np.array(preSpearman.astype(float))
+
     unprocessedMatrix = np.array(list(zip(useablePatients, np.array(preSpearman.astype(float)))), dtype=object)
     with open('unscaledData.csv', 'w') as csvfile:
         csvfile.write("Patient Number + UnScaled FLC Values" + '\n')
@@ -533,6 +534,97 @@ def tauCorr():
     np.savetxt("tau.csv", tau, delimiter=",")
     return tau
 
+def treatCombDict():
+    treatCombDict = {}
+    for key in outerDict:
+        patientsArray = np.array(treatDict[key])
+        treatCombDict[key] = {}
+        temp = treatCombDict[key]
+        numData = patientsArray.shape[0]
+        innerDict = outerDict[key]
+        binDates = []
+        startDate = patientsArray[0, 1]
+        binNum = 0
+        foundBeginning = None
+        for innerKey in innerDict:
+            innerList = innerDict[innerKey]
+            binDates.append(innerList[1])
+            if(foundBeginning != True and innerList[1] >= startDate):
+                binNum = int(innerKey)
+                foundBeginning = True
+        temp[0] = set()
+        temp[0].add(0)
+        for i in range(0, numData):
+            treatment = patientsArray[i, 0]
+            currDate = patientsArray[i, 1]
+            for j in range(1, len(binDates)):
+                if currDate >= binDates[j-1] and currDate < binDates[j]:
+                    if j not in temp.keys():
+                        temp[j] = set()
+                    if(treatment == 'Lenalidomide'):
+                        temp[j].add(1)
+                    elif(treatment == 'Bortezomib'):
+                        temp[j].add(2)
+                    elif(treatment == 'Carfilzomib'):
+                        temp[j].add(3)
+                    elif(treatment == 'Dexamethasone'):
+                        temp[j].add(4)
+                    elif(treatment == 'Pomalidomide'):
+                        temp[j].add(5)
+                    elif(treatment == 'Thalidomide'):
+                        temp[j].add(6)
+                    elif(treatment == 'Cyclophosphamide'):
+                        temp[j].add(7)
+                    elif(treatment == 'Melphalan'):
+                        temp[j].add(8)
+                    elif(treatment == 'Prednisone'):
+                        temp[j].add(9)
+                    elif(treatment == 'Ixazomib'):
+                        temp[j].add(10)
+                    elif(treatment == 'Cisplatin'):
+                        temp[j].add(11)
+                    elif(treatment == 'Doxorubicin'):
+                        temp[j].add(12)
+                    elif(treatment == 'Etoposide'):
+                        temp[j].add(13)
+                    elif(treatment == 'Vincristine'):
+                        temp[j].add(14)
+                    elif(treatment == 'Daratumumab'):
+                        temp[j].add(15)
+                    elif(treatment == 'Elotuzumab'):
+                        temp[j].add(16)
+                    elif(treatment == 'Bendamustine'):
+                        temp[j].add(17)
+                    elif(treatment == 'Panobinostat'):
+                        temp[j].add(18)
+                    elif(treatment == 'Venetoclax'):
+                        temp[j].add(19)
+                    elif(treatment == 'CAR-T'):
+                        temp[j].add(20)
+                    else:
+                        temp[j].add(-1)
+        print(str(key) + ": " + str(treatCombDict[key]))
+        for k in range(0, len(binDates)):
+            if k not in temp.keys():
+                temp[k] = set()
+                temp[k].add(0)
+        with open('treatmentSequence.csv', 'a') as csvfile:
+            csvfile.write(str(key))
+            csvfile.write(',')
+            for innerKey in range(0, len(binDates)):
+                dateTemp = binDates[innerKey]
+                tempList = list(temp[innerKey])
+                csvfile.write('[' + str(tempList[0]))
+                for m in range(1, len(tempList)):
+                    csvfile.write("; " + str(tempList[m]))
+                csvfile.write(']')
+                csvfile.write(': ' + dateTemp.strftime('%d/%m/%Y'))
+                csvfile.write(',')
+            csvfile.write('\n')
+
+
+
+
 
 extractInfo()
 extractRawInfo()
@@ -541,6 +633,7 @@ rawBinMaker()
 D1, D2 = derivativeMaker()
 FLCdictionary(D1, D2)
 processingWrite()
+treatCombDict()
 # spearmanMatrix = spearmansCorr()
 # spearmanDistanceMatrix = distanceMatrix(spearmanMatrix)
 # pearsonsMatrix = pearsonsCorr()
