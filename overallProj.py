@@ -204,7 +204,7 @@ def rawBinMaker():
                 allTests.append(v[0])
                 allDates.append(str(v[1]))
                 index = index + 1
-        outerDict[eachKey] = properSampleMaker(eachKey, allTests, allDates) 
+        outerDict[eachKey] = properSampleMaker(eachKey, allTests, allDates)
     print("Went through all patients, printing outer Dictionary NOW")
     with open("rawValuesBins_1.csv", "w", newline='') as csvfile:
         for x in outerDict:
@@ -242,12 +242,15 @@ def properSampleMaker(patientID, FLC_Value, Date):
         print(interpolated)
         print("Down Sample 28 Day Interpolation")
         print(downSample)
-    
+
     for x in range(len(finalData) - 1):
         #treatmentArray = treatmentAdder(finalData[:, 0], np.array(treatDict[patientID]), len(finalData) - 1, patientID)
         innerDict[x] = [finalData[x, 0].to_pydatetime().strftime('%Y-%m-%d'), round(finalData[x, 1], 2)] # Date, FLC
         datesForTreat.append(finalData[x, 0].to_pydatetime().strftime('%Y-%m-%d'))
     treatMatrix = tryTreatment(datesForTreat, patientID)
+    for x in range(len(finalData) - 1):
+        innerDict[x].append(treatMatrix[x])
+    print(innerDict)
     return innerDict
 
 def treatmentAdder(workingArray, patientsArray, arraySize, patient):
@@ -655,100 +658,71 @@ def tauCorr():
 
 def tryTreatment(Dates, Patient):
     print(Dates)
-    return Dates
-
-def treatCombDict():
-    global treatCombDict
-    treatCombDict = {}
-    try:
-        os.remove('treatmentSequence.csv')
-    except OSError:
-        pass
-    for key in outerDict:
-        patientsArray = np.array(treatDict[key])
-        treatCombDict[key] = {}
-        temp = treatCombDict[key]
-        numData = patientsArray.shape[0]
-        innerDict = outerDict[key]
-        binDates = []
-        startDate = patientsArray[0, 1]
-        binNum = 0
-        foundBeginning = None
-        for innerKey in innerDict:
-            innerList = innerDict[innerKey]
-            binDates.append(datetime.strptime(innerList[0], '%Y-%m-%d').date())
-            if(foundBeginning != True and datetime.strptime(innerList[0], '%Y-%m-%d').date() >= startDate):
-                binNum = int(innerKey)
-                foundBeginning = True
-        temp[0] = set()
-        temp[0].add(0)
-        for i in range(0, numData):
-            treatment = patientsArray[i, 0]
-            currDate = patientsArray[i, 1]
-            for j in range(1, len(binDates)):
-                if currDate >= binDates[j-1] and currDate < binDates[j]:
-                    if j not in temp.keys():
-                        temp[j] = set()
-                    if(treatment == 'Lenalidomide'):
-                        temp[j].add(1)
-                    elif(treatment == 'Bortezomib'):
-                        temp[j].add(2)
-                    elif(treatment == 'Carfilzomib'):
-                        temp[j].add(3)
-                    elif(treatment == 'Dexamethasone'):
-                        temp[j].add(4)
-                    elif(treatment == 'Pomalidomide'):
-                        temp[j].add(5)
-                    elif(treatment == 'Thalidomide'):
-                        temp[j].add(6)
-                    elif(treatment == 'Cyclophosphamide'):
-                        temp[j].add(7)
-                    elif(treatment == 'Melphalan'):
-                        temp[j].add(8)
-                    elif(treatment == 'Prednisone'):
-                        temp[j].add(9)
-                    elif(treatment == 'Ixazomib'):
-                        temp[j].add(10)
-                    elif(treatment == 'Cisplatin'):
-                        temp[j].add(11)
-                    elif(treatment == 'Doxorubicin'):
-                        temp[j].add(12)
-                    elif(treatment == 'Etoposide'):
-                        temp[j].add(13)
-                    elif(treatment == 'Vincristine'):
-                        temp[j].add(14)
-                    elif(treatment == 'Daratumumab'):
-                        temp[j].add(15)
-                    elif(treatment == 'Elotuzumab'):
-                        temp[j].add(16)
-                    elif(treatment == 'Bendamustine'):
-                        temp[j].add(17)
-                    elif(treatment == 'Panobinostat'):
-                        temp[j].add(18)
-                    elif(treatment == 'Venetoclax'):
-                        temp[j].add(19)
-                    elif(treatment == 'CAR-T'):
-                        temp[j].add(20)
-                    else:
-                        temp[j].add(-1)
-        print(str(key) + ": " + str(treatCombDict[key]))
-        for k in range(0, len(binDates)):
-            if k not in temp.keys():
-                temp[k] = set()
-                temp[k].add(0)
-        with open('treatmentSequence.csv', 'a') as csvfile:
-            csvfile.write(str(key))
-            csvfile.write(',')
-            for innerKey in range(0, len(binDates)):
-                dateTemp = binDates[innerKey]
-                tempList = list(temp[innerKey])
-                csvfile.write('[' + str(tempList[0]))
-                for m in range(1, len(tempList)):
-                    csvfile.write("; " + str(tempList[m]))
-                csvfile.write(']')
-                csvfile.write(': ' + dateTemp.strftime('%d/%m/%Y'))
-                csvfile.write(',')
-            csvfile.write('\n')
+    binDates = []
+    treatments = []
+    temp = {}
+    for i in range(0, len(Dates)):
+        binDates.append(datetime.strptime(Dates[i], '%Y-%m-%d').date())
+    patientsArray = np.array(treatDict[Patient])
+    numData = patientsArray.shape[0]
+    temp[0] = set()
+    temp[0].add(0)
+    for i in range(0, numData):
+        treatment = patientsArray[i, 0]
+        currDate = patientsArray[i, 1]
+        for j in range(1, len(binDates)):
+            if currDate >= binDates[j-1] and currDate < binDates[j]:
+                if j not in temp.keys():
+                    temp[j] = set()
+                if(treatment == 'Lenalidomide'):
+                    temp[j].add(1)
+                elif(treatment == 'Bortezomib'):
+                    temp[j].add(2)
+                elif(treatment == 'Carfilzomib'):
+                    temp[j].add(3)
+                elif(treatment == 'Dexamethasone'):
+                    temp[j].add(4)
+                elif(treatment == 'Pomalidomide'):
+                    temp[j].add(5)
+                elif(treatment == 'Thalidomide'):
+                    temp[j].add(6)
+                elif(treatment == 'Cyclophosphamide'):
+                    temp[j].add(7)
+                elif(treatment == 'Melphalan'):
+                    temp[j].add(8)
+                elif(treatment == 'Prednisone'):
+                    temp[j].add(9)
+                elif(treatment == 'Ixazomib'):
+                    temp[j].add(10)
+                elif(treatment == 'Cisplatin'):
+                    temp[j].add(11)
+                elif(treatment == 'Doxorubicin'):
+                    temp[j].add(12)
+                elif(treatment == 'Etoposide'):
+                    temp[j].add(13)
+                elif(treatment == 'Vincristine'):
+                    temp[j].add(14)
+                elif(treatment == 'Daratumumab'):
+                    temp[j].add(15)
+                elif(treatment == 'Elotuzumab'):
+                    temp[j].add(16)
+                elif(treatment == 'Bendamustine'):
+                    temp[j].add(17)
+                elif(treatment == 'Panobinostat'):
+                    temp[j].add(18)
+                elif(treatment == 'Venetoclax'):
+                    temp[j].add(19)
+                elif(treatment == 'CAR-T'):
+                    temp[j].add(20)
+                else:
+                    temp[j].add(-1)
+    for k in range(0, len(binDates)):
+        if k not in temp.keys():
+            temp[k] = set()
+            temp[k].add(0)
+    for i in range(0, len(binDates)):
+        treatments.append(temp[i])
+    return treatments
 
 
 
