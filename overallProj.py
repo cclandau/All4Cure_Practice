@@ -213,10 +213,12 @@ def rawBinMaker():
             csvfile.write(x)
             csvfile.write("\n")
             for y in outerDict[x]:
-                temp = str(outerDict[x][y]).strip("'[]")
+                treatment = str(outerDict[x][y][2]).replace(",", ";")
+                temp = str(outerDict[x][y][0]) + ", " +  str(outerDict[x][y][1]) + ", " + treatment
+                temp = temp.strip("'[]")
                 csvfile.write("Bin: " + str(y) + ", " + temp.replace("'", ""))
                 csvfile.write("\n")
-                #print(y, ' : ' , outerDict[x][y])
+                print(y, ' : ' , outerDict[x][y])
 
 def properSampleMaker(patientID, FLC_Value, Date):
     dataDict = {'Date': Date, 'FLC_Value': FLC_Value}
@@ -226,7 +228,7 @@ def properSampleMaker(patientID, FLC_Value, Date):
     df['FLC_Value'] = df['FLC_Value'].apply(pd.to_numeric, errors='coerce')
     resample = df.resample('D').mean()
     interpolated = resample.interpolate(method='linear')
-    downSample = interpolated.resample('28D').mean()
+    downSample = interpolated.resample('28D').first()
     finalData = downSample.reset_index()
     finalData = finalData.values
     innerDict = {}
@@ -253,68 +255,6 @@ def properSampleMaker(patientID, FLC_Value, Date):
     print(innerDict)
     return innerDict
 
-def treatmentAdder(workingArray, patientsArray, arraySize, patient):
-#     print("working")
-#     print(workingArray) # date time objects, binDates[]
-#     print("patient")
-#     print(patientsArray) # Drug Name, Date time object
-
-    dateMed = {}
-    startDate = patientsArray[0, 1]
-    #for x in range(0, arraySize):
-    dateMed[0] = set()
-    dateMed[0].add(0)
-    for i in range(0, patientsArray.shape[0]):
-        treatment = patientsArray[i, 0]
-        currDate = patientsArray[i, 1]
-        for j in range(1, arraySize):
-            if currDate >= workingArray[j-1] and currDate < workingArray[j]:
-                if j not in dateMed.keys():
-                    dateMed[j] = set()
-                if(treatment == 'Lenalidomide'):
-                    dateMed[j].add(1)
-                elif(treatment == 'Bortezomib'):
-                    dateMed[j].add(2)
-                elif(treatment == 'Carfilzomib'):
-                    dateMed[j].add(3)
-                elif(treatment == 'Dexamethasone'):
-                    dateMed[j].add(4)
-                elif(treatment == 'Pomalidomide'):
-                    dateMed[j].add(5)
-                elif(treatment == 'Thalidomide'):
-                    dateMed[j].add(6)
-                elif(treatment == 'Cyclophosphamide'):
-                    dateMed[j].add(7)
-                elif(treatment == 'Melphalan'):
-                    dateMed[j].add(8)
-                elif(treatment == 'Prednisone'):
-                    dateMed[j].add(9)
-                elif(treatment == 'Ixazomib'):
-                    dateMed[j].add(10)
-                elif(treatment == 'Cisplatin'):
-                    dateMed[j].add(11)
-                elif(treatment == 'Doxorubicin'):
-                    dateMed[j].add(12)
-                elif(treatment == 'Etoposide'):
-                    dateMed[j].add(13)
-                elif(treatment == 'Vincristine'):
-                    dateMed[j].add(14)
-                elif(treatment == 'Daratumumab'):
-                    dateMed[j].add(15)
-                elif(treatment == 'Elotuzumab'):
-                    dateMed[j].add(16)
-                elif(treatment == 'Bendamustine'):
-                    dateMed[j].add(17)
-                elif(treatment == 'Panobinostat'):
-                    dateMed[j].add(18)
-                elif(treatment == 'Venetoclax'):
-                    dateMed[j].add(19)
-                elif(treatment == 'CAR-T'):
-                    dateMed[j].add(20)
-                else:
-                    dateMed[j].add(-1)
-    print(dateMed)
-    return patientsArray
 def patientBinCreator(patientID, FLC_Value, Date):
     #innerDict = {'0' : ['test initial'], '1' : ['a', 'b', 'c']}
     for x in range(0, len(Date)):
@@ -414,30 +354,6 @@ def derivativeMaker():
             D2[i] = max_val2
 
     return D1, D2
-
-# dataTemp = Cece's working data Matrix
-# Base FLC dictionary off of original raw values
-# Delete patients with less than six months of data
-# Delete patients who can't be found in treatment list - smoldering
-# Delete patients who don't have a baseline reading
-#     i.e: Treatment date is earlier than first FLC test date
-# Currently have matrix - entire timeline of patients with the following characteristics:
-#     - sufficient data, > 6 months
-#     - proper baseline value
-#     - are "normal" non-smoldering myeloma patients
-# THEN: GO THROUGH AND
-#     check each data entry for the remainder of the matrix
-#     Starting at date/time 0, check for all values 3-5 weeks from that point
-#     If there is one value, use that for the next row
-#     If there is NO value
-#         Check to see if there are data points for a time period of 6-10 weeks since the last data point
-#             If this is TRUE & there is a data point 6-10 weeks since the previous one, we will interpolate regardless of getTreatments
-#             If this is FALSE, then check to see if the treatment since last data point is equal to treatment of next data point
-#                 If this is TRUE (Treatment 1 = Treatment 2), even if they are zero - then we will interpolate these values at 4 week intervals
-#                 If this is FALSE, create a NEW vector MMX_0 contained data up until gap,
-#                                     MMX_1 will be the vector starting at the time given by the next data point
-#     If there are MULTIPLE FLC Values between 3-5 weeks since the previous data point
-#         Choose the FLC value that is closest to the time =  previous data point date + 4 weeks
 
 def FLCdictionary(D1, D2):
     global FLCdict
@@ -657,7 +573,7 @@ def tauCorr():
     return tau
 
 def tryTreatment(Dates, Patient):
-    print(Dates)
+    #print(Dates)
     binDates = []
     treatments = []
     temp = {}
@@ -723,10 +639,6 @@ def tryTreatment(Dates, Patient):
     for i in range(0, len(binDates)):
         treatments.append(temp[i])
     return treatments
-
-
-
-
 
 extractInfo()
 extractRawInfo()
