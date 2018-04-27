@@ -544,7 +544,6 @@ def logScaling():
 
 def initialHDBProcessing(workingMatrix, selector):
     hdb_t1 = time.time()
-    print(workingMatrix[:,0])
     hdb = HDBSCAN(min_cluster_size=2).fit(np.delete(workingMatrix, 0, axis=1))
     hdb_labels = hdb.labels_
     hdb_prob = hdb.probabilities_
@@ -556,9 +555,9 @@ def initialHDBProcessing(workingMatrix, selector):
         csvfile.write("Patient Number, Cluster Label, Cluster Probability" + '\n')
         csvfile.write('\n'.join('{}, {}, {}'.format(x[0], x[1], x[2]) for x in merged))
 
-    print('\n\nHDBSCAN Results for ' + selector)
-    print('Estimated number of clusters: %d' % n_clusters_hdb_)
-    print('Patients, Cluster Labels, and Probability')
+    #print('\n\nHDBSCAN Results for ' + selector)
+    #print('Estimated number of clusters: %d' % n_clusters_hdb_)
+    #print('Patients, Cluster Labels, and Probability')
     return(merged)
 
     ## hdb ___ plotting ###
@@ -613,7 +612,8 @@ def tauCorr():
     return tau
 
 def tryTreatment(Dates, Patient):
-    #print(Dates)
+    #print
+    # (Dates)
     binDates = []
     treatments = []
     temp = {}
@@ -707,14 +707,36 @@ def getClustersOnTrend(toBeNormalized):
        for j in range(1, len(toBeNormalized[i])):
            toBeNormalized[i][j] = (toBeNormalized[i][j].astype(float) - minFLC.astype(float))/maxFLC.astype(float)
     clusters = initialHDBProcessing(toBeNormalized, "hdbscanBinnedData")
-    print(clusters)
+    sortedClusters = clusters[clusters[:,1].astype(float).argsort()]
+    return sortedClusters
+
+def partitionTrendClustersOnScale(rawData, clusters):
+    currentCluster = -1
+    clusterMatrix = np.empty(numberOfPoints + 2)
+    for row in clusters:
+        if(int(row[1]) != currentCluster):
+            clusterMatrix = np.delete(clusterMatrix, 0, axis=0)
+            print("array for cluster: ", currentCluster)
+            print(clusterMatrix, '\n\n\n\n')
+            currentCluster = int(row[1])
+            clusterMatrix = np.empty(numberOfPoints + 2)
+        for patient in rawData:
+            if(patient[0] == row[0]):
+                clusterMatrix = np.vstack((clusterMatrix, patient))
+                break
+            #print(patient)
+    clusterMatrix = np.delete(clusterMatrix, 0, axis=0)
+    print("array for cluster: ", currentCluster)
+    print(clusterMatrix, '\n\n\n\n')
     
 #extractInfo()
 #extractRawInfo()
 #rawDelete()
 #rawBinMaker()
 binnedData = buildMatrix()
-getClustersOnTrend(binnedData)
+rawData = np.copy(binnedData)
+sortedClusters = getClustersOnTrend(binnedData)
+partitionTrendClustersOnScale(rawData, sortedClusters)
 #print(binnedData)
 #D1, D2 = derivativeMaker()
 #FLCdictionary(D1, D2)
