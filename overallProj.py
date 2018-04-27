@@ -188,6 +188,19 @@ def rawBinMaker():
     ## VALUE = DICTIONARY => KEY = NUMBER OF WEEKS - (3->5)*N
     ##                       VALUE = LIST OF FLC VALUES IN THAT TIME FRAME
     global outerDict
+    global segmentLength
+    global overlapBy
+    segmentLength = 6
+    #Change to desired overlap
+    overlapBy = 1
+    try:
+        os.remove('miniSeqsMedsSL_6_OL_1 .csv') #Change to file name
+    except OSError:
+        pass
+    try:
+        os.remove('miniSeqsLabsSL_6_OL_1.csv')  #Change to file name
+    except OSError:
+        pass
     outerDict = {}
     weekCounter = 1
     for eachKey, value in dataTest.items():
@@ -250,8 +263,34 @@ def properSampleMaker(patientID, FLC_Value, Date):
         innerDict[x] = [finalData[x, 0].to_pydatetime().strftime('%Y-%m-%d'), round(finalData[x, 1], 2)] # Date, FLC
         datesForTreat.append(finalData[x, 0].to_pydatetime().strftime('%Y-%m-%d'))
     treatMatrix = tryTreatment(datesForTreat, patientID)
+    indexT = 0
+    counterT = 0
+    with open('miniSeqsMedsSL_6_OL_1 .csv', 'a') as csvfile:    #change to file name
+        while(indexT + segmentLength < len(datesForTreat)):
+            csvfile.write(str(patientID) + "." + str(counterT))
+            csvfile.write(",")
+            for i in range(indexT, segmentLength + indexT):
+                csvfile.write(str(treatMatrix[i]).replace(',', ';') + ": " + datesForTreat[i])
+                csvfile.write(',')
+            csvfile.write('\n')
+            indexT = indexT + segmentLength - overlapBy
+            counterT += 1
+    indexL = 0
+    counterL = 0
+    with open('miniSeqsLabsSL_6_OL_1.csv', 'a') as csvfile:  #change to file name
+        while(indexL + segmentLength < len(datesForTreat)):
+            csvfile.write(str(patientID) + "." + str(counterL))
+            csvfile.write(",")
+            for i in range(indexL, segmentLength + indexL):
+                tempList = innerDict[i]
+                csvfile.write(str(tempList[1]) + ": " + datesForTreat[i])
+                csvfile.write(',')
+            csvfile.write('\n')
+            indexL = indexL + segmentLength - overlapBy
+            counterL += 1
     for x in range(len(finalData) - 1):
         innerDict[x].append(treatMatrix[x])
+    #with open('')
     print(innerDict)
     return innerDict
 
