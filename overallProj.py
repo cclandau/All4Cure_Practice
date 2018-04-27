@@ -542,14 +542,15 @@ def logScaling():
     # minMax - minMaxMatrix
     # logScaled - logRawMatrix
 
-def hdbProcessing(workingMatrix, selector):
+def initialHDBProcessing(workingMatrix, selector):
     hdb_t1 = time.time()
-    hdb = HDBSCAN(min_cluster_size=2).fit(workingMatrix)
+    print(workingMatrix[:,0])
+    hdb = HDBSCAN(min_cluster_size=2).fit(np.delete(workingMatrix, 0, axis=1))
     hdb_labels = hdb.labels_
     hdb_prob = hdb.probabilities_
     hdb_elapsed_time = time.time() - hdb_t1
     n_clusters_hdb_ = len(set(hdb_labels)) - (1 if -1 in hdb_labels else 0)
-    merged = np.array(list(zip(useablePatients, hdb_labels, hdb_prob)))
+    merged = np.array(list(zip(workingMatrix[:,0], hdb_labels, hdb_prob)))
 
     with open(selector + '.csv', 'w') as csvfile:
         csvfile.write("Patient Number, Cluster Label, Cluster Probability" + '\n')
@@ -558,25 +559,24 @@ def hdbProcessing(workingMatrix, selector):
     print('\n\nHDBSCAN Results for ' + selector)
     print('Estimated number of clusters: %d' % n_clusters_hdb_)
     print('Patients, Cluster Labels, and Probability')
-    print(merged)
+    return(merged)
 
     ## hdb ___ plotting ###
-    hdb_unique_labels = set(hdb_labels)
-    hdb_colors = plt.cm.Spectral(np.linspace(0, 1, len(hdb_unique_labels)))
-    fig = plt.figure(figsize=plt.figaspect(0.5))
-    hdb_axis = fig.add_subplot('121')
+    #hdb_unique_labels = set(hdb_labels)
+    #hdb_colors = plt.cm.Spectral(np.linspace(0, 1, len(hdb_unique_labels)))
+    #fig = plt.figure(figsize=plt.figaspect(0.5))
+    #hdb_axis = fig.add_subplot('121')
 
-    for k, col in zip(hdb_unique_labels, hdb_colors):
-        if k == -1:
+    #for k, col in zip(hdb_unique_labels, hdb_colors):
+    #    if k == -1:
             # Black used for noise.
-            col = 'k'
+    #        col = 'k'
         # # Not sure what the x, y axes should be, this is how I had it set up for the previous run of HDBSCAN
         # # Right now it's only comparing the first and second data points of all patients
-        hdb_axis.plot(workingMatrix[hdb_labels == k, 0].astype(float), workingMatrix[hdb_labels == k, 1].astype(float), 'o', markerfacecolor=col,
-                      markeredgecolor='k', markersize=6)
-    hdb_axis.set_title('HDBSCAN\nEstimated number of clusters: %d' % n_clusters_hdb_)
+    #    hdb_axis.plot(workingMatrix[hdb_labels == k, 0].astype(float), workingMatrix[hdb_labels == k, 1].astype(float), 'o', markerfacecolor=col,
+    #                  markeredgecolor='k', markersize=6)
+    #hdb_axis.set_title('HDBSCAN\nEstimated number of clusters: %d' % n_clusters_hdb_)
     # plt.show()
-    return;
 
 
 # this function takes in either a spearman or pearson correlation matrix and
@@ -706,7 +706,8 @@ def getClustersOnTrend(toBeNormalized):
        maxFLC = max(toBeNormalized[i][1:].astype(float))
        for j in range(1, len(toBeNormalized[i])):
            toBeNormalized[i][j] = (toBeNormalized[i][j].astype(float) - minFLC.astype(float))/maxFLC.astype(float)
-    hdbProcessing(np.delete(toBeNormalized, 0, axis=1), "hdbscanBinnedData")
+    clusters = initialHDBProcessing(toBeNormalized, "hdbscanBinnedData")
+    print(clusters)
     
 #extractInfo()
 #extractRawInfo()
