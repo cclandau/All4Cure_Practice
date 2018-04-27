@@ -13,6 +13,7 @@ from hdbscan import HDBSCAN
 from sklearn.cluster import DBSCAN
 from sklearn import metrics
 from sklearn.datasets.samples_generator import make_blobs
+from sklearn.preprocessing import MinMaxScaler
 import time
 import inspect
 import csv
@@ -679,19 +680,51 @@ def tryTreatment(Dates, Patient):
         treatments.append(temp[i])
     return treatments
 
-extractInfo()
-extractRawInfo()
-rawDelete()
-rawBinMaker()
-# D1, D2 = derivativeMaker()
-# FLCdictionary(D1, D2)
-# processingWrite()
+#Will build a matrix from the raw and interpolated values in
+#the miniSeqsLabsSL_6_OL_1.csv file. This raw data matrix will then
+#be used in our clustering algorithms.
+def buildMatrix():
+    with open("miniSeqsLabsSL_6_OL_1.csv", "r") as rawPatientData:
+        reader = csv.reader(rawPatientData)
+        binnedData = np.empty(numberOfPoints + 2)
+        for line in list(reader):
+            column = 1
+            justData = [] #this matrix will have patient number and each data point
+            justData.append(line[0])
+            while column < len(line) - 1:
+                justData.append(float(line[column].split(":", 1)[0])) #gets rid of the date attached to each FLC value
+                column = column + 1
+            binnedData = np.vstack((binnedData, justData))
+        binnedData = np.delete(binnedData, (0), axis=0)
+        return binnedData
+
+#Will min-max scale the data in binnedData, and then run hdbscan on the new matrix.
+#uses the sklearn MinMaxScaler function to perform transformation on binnedData.
+def getClustersOnTrend(toBeNormalized):
+    for i in range(0, toBeNormalized.shape[0]):
+       minFLC = min(toBeNormalized[i][1:].astype(float))
+       maxFLC = max(toBeNormalized[i][1:].astype(float))
+       for j in range(1, len(toBeNormalized[i])):
+           toBeNormalized[i][j] = (toBeNormalized[i][j].astype(float) - minFLC.astype(float))/maxFLC.astype(float)
+    hdbProcessing(np.delete(toBeNormalized, 0, axis=1), "hdbscanBinnedData")
+    
+#extractInfo()
+#extractRawInfo()
+#rawDelete()
+#rawBinMaker()
+binnedData = buildMatrix()
+getClustersOnTrend(binnedData)
+#print(binnedData)
+#D1, D2 = derivativeMaker()
+#FLCdictionary(D1, D2)
+#processingWrite()
 #treatCombDict()
 # spearmanMatrix = spearmansCorr()
 # spearmanDistanceMatrix = distanceMatrix(spearmanMatrix)
 # pearsonsMatrix = pearsonsCorr()
 # pearsonsDistanceMatrix = distanceMatrix(pearsonsMatrix)
-# minMaxMatrix = minMaxNormalization()
+#minMaxMatrix = minMaxNormalization()
+#print(minMaxMatrix)
 # logRawMatrix = logScaling()
 # tauMatrix = tauCorr()
 # tauDistanceMatrix = distanceMatrix(tauMatrix)
