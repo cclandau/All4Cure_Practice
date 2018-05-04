@@ -826,8 +826,10 @@ def buildMatrix():
             justData = [] #this matrix will have patient number and each data point
             justData.append(line[0])
             while column < len(line) - 1:
-                justData.append(float(line[column].split(":", 1)[0])) #gets rid of the date attached to each FLC value
-                column = column + 1
+                print(line[column].split(",", 1))
+                print(type(line[column].split(",", 1)))
+                justData.append(float(line[column].split(",", 1)[0])) #gets rid of the date attached to each FLC value
+                column = column + 2
             binnedData = np.vstack((binnedData, justData))
         binnedData = np.delete(binnedData, (0), axis=0)
         return binnedData
