@@ -18,7 +18,6 @@ import time
 import inspect
 import csv
 from ipykernel.tests.test_serialize import point
-from astropy.wcs.docstrings import row
 from sympy.polys.partfrac import apart
 from sympy.polys.polytools import intervals
 from docutils.writers.docutils_xml import RawXmlError
@@ -544,7 +543,8 @@ def logScaling():
 
 def initialHDBProcessing(workingMatrix, selector):
     hdb_t1 = time.time()
-    hdb = HDBSCAN(min_cluster_size=2).fit(np.delete(workingMatrix, 0, axis=1))
+    #print(workingMatrix[:,1:].astype(float))
+    hdb = HDBSCAN(min_cluster_size=2).fit(np.delete(workingMatrix[:,1:].astype(float), 0, axis=1))
     hdb_labels = hdb.labels_
     hdb_prob = hdb.probabilities_
     hdb_elapsed_time = time.time() - hdb_t1
@@ -699,13 +699,16 @@ def buildMatrix():
         return binnedData
 
 #Will min-max scale the data in binnedData, and then run hdbscan on the new matrix.
-#uses the sklearn MinMaxScaler function to perform transformation on binnedData.
+#runs a min-max normalization on the 
 def getClustersOnTrend(toBeNormalized):
     for i in range(0, toBeNormalized.shape[0]):
        minFLC = min(toBeNormalized[i][1:].astype(float))
+       for j in range(1, len(toBeNormalized[i])):
+           toBeNormalized[i][j] = (toBeNormalized[i][j].astype(float) - minFLC.astype(float))
        maxFLC = max(toBeNormalized[i][1:].astype(float))
        for j in range(1, len(toBeNormalized[i])):
-           toBeNormalized[i][j] = (toBeNormalized[i][j].astype(float) - minFLC.astype(float))/maxFLC.astype(float)
+           if(maxFLC.astype(float) != 0):
+               toBeNormalized[i][j] = (toBeNormalized[i][j].astype(float))/maxFLC.astype(float)
     clusters = initialHDBProcessing(toBeNormalized, "hdbscanBinnedData")
     sortedClusters = clusters[clusters[:,1].astype(float).argsort()]
     return sortedClusters
@@ -716,18 +719,24 @@ def partitionTrendClustersOnScale(rawData, clusters):
     for row in clusters:
         if(int(row[1]) != currentCluster):
             clusterMatrix = np.delete(clusterMatrix, 0, axis=0)
+            print(clusterMatrix.shape[0])
             print("array for cluster: ", currentCluster)
             print(clusterMatrix, '\n\n\n\n')
+            #for clusterRow in range(0, clusterMatrix.shape[0]): #plotting
+            #     plt.plot([1,2,3,4,5,6], clusterMatrix[clusterRow,1:].astype(float), label=clusterMatrix[clusterRow, 0])
+            #     plt.legend()
+            #plt.title("cluster : " + str(currentCluster))
+            #plt.show()
+            #input()
+            #plt.clf()
+            subClusters = initialHDBProcessing(clusterMatrix, "subClusterData" + str(currentCluster))
             currentCluster = int(row[1])
             clusterMatrix = np.empty(numberOfPoints + 2)
         for patient in rawData:
             if(patient[0] == row[0]):
                 clusterMatrix = np.vstack((clusterMatrix, patient))
                 break
-            #print(patient)
     clusterMatrix = np.delete(clusterMatrix, 0, axis=0)
-    print("array for cluster: ", currentCluster)
-    print(clusterMatrix, '\n\n\n\n')
     
 #extractInfo()
 #extractRawInfo()
@@ -762,12 +771,10 @@ partitionTrendClustersOnScale(rawData, sortedClusters)
 # np.savetxt("spearmanDistance.csv", spearmanDistanceMatrix, delimiter=",")
 # np.savetxt("tauDistance.csv", tauDistanceMatrix, delimiter=",")
 #
-# #this part is just for testing the accuracy of pearson and spearman clustering
-# for row in range(0, preSpearman.shape[0]):
+#this part is just for testing the accuracy of pearson and spearman clustering
+#for row in range(0, rawData.shape[0]):
 #     plt.clf()
-#     plt.plot([1,2,3,4,5], preSpearman[row, :].astype(float))
-#     patNumber = open("processed.csv", "r")
-#     reader = csv.reader(patNumber)
-#     patList = np.array(list(reader))
-#     plt.title(patList[row, 0])
-#     #plt.savefig(patList[row, 0])
+#     plt.plot([1,2,3,4,5,6], rawData[row,1:].astype(float))
+#     patNumber = rawData[row][0]
+#     plt.title(patNumber)
+#     plt.savefig("Graphs/" + patNumber + ".png")
