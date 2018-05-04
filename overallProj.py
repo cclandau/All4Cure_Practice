@@ -192,13 +192,23 @@ def rawBinMaker():
     global overlapBy
     segmentLength = 6
     #Change to desired overlap
-    overlapBy = 1
+    overlapBy = 0
+    global medSequenceFileName
+    global labSequenceFileName
+    #Created medSequenceMatrix and labSequenceMatrix which is the csv files in matrix form
+    #and without dates. We may not need labSequenceMatrix and we can delete it later if unused.
+    global medSequenceMatrix
+    global labSequenceMatrix
+    medSequenceMatrix = []
+    labSequenceMatrix = []
+    medSequenceFileName = 'miniSeqsMedsSL_6_OL_0 .csv'
+    labSequenceFileName = 'miniSeqsLabsSL_6_OL_0.csv'
     try:
-        os.remove('miniSeqsMedsSL_6_OL_1 .csv') #Change to file name
+        os.remove(medSequenceFileName)
     except OSError:
         pass
     try:
-        os.remove('miniSeqsLabsSL_6_OL_1.csv')  #Change to file name
+        os.remove(labSequenceFileName)
     except OSError:
         pass
     outerDict = {}
@@ -206,11 +216,11 @@ def rawBinMaker():
     for eachKey, value in dataTest.items():
         allTests = []
         allDates = []
-        print("About to make inner dictionary for: " + eachKey)
+        #print("About to make inner dictionary for: " + eachKey)
         index = 0;
         for v in value:
             if (str(v[1])) in allDates:
-                print("replacing FLC VALUE " + allTests[index - 1] + " on " + allDates[index - 1] + " with " + v[0] + " from " + str(v[1]) + " for patient " + eachKey)
+                #print("replacing FLC VALUE " + allTests[index - 1] + " on " + allDates[index - 1] + " with " + v[0] + " from " + str(v[1]) + " for patient " + eachKey)
                 allTests[index - 1] = v[0]
                 allDates[index - 1] = str(v[1])
             else:
@@ -218,7 +228,7 @@ def rawBinMaker():
                 allDates.append(str(v[1]))
                 index = index + 1
         outerDict[eachKey] = properSampleMaker(eachKey, allTests, allDates)
-    print("Went through all patients, printing outer Dictionary NOW")
+    #print("Went through all patients, printing outer Dictionary NOW")
     with open("rawValuesBins_1.csv", "w", newline='') as csvfile:
         for x in outerDict:
             #print(x)
@@ -231,7 +241,9 @@ def rawBinMaker():
                 temp = temp.strip("'[]")
                 csvfile.write("Bin: " + str(y) + ", " + temp.replace("'", ""))
                 csvfile.write("\n")
-                print(y, ' : ' , outerDict[x][y])
+                #print(y, ' : ' , outerDict[x][y])
+    labSequenceMatrix = np.array(labSequenceMatrix)
+    medSequenceMatrix = np.array(medSequenceMatrix)
 
 def properSampleMaker(patientID, FLC_Value, Date):
     dataDict = {'Date': Date, 'FLC_Value': FLC_Value}
@@ -249,14 +261,15 @@ def properSampleMaker(patientID, FLC_Value, Date):
     if (patientID == 'MM-120'):
 #         with open('MM120_test.csv', 'w', newline='') as csvfile:
 #             csvfile.write('\n'.join('{}, {}, {}'.format(resample[x], interpolated[x], downSample[x]) for x in range(0, len(interpolated.values))))
-        print("Original")
-        print(df)
-        print("Daily Upsample")
-        print(resample)
-        print("Interpolating Daily")
-        print(interpolated)
-        print("Down Sample 28 Day Interpolation")
-        print(downSample)
+        #print("Original")
+        #print(df)
+        #print("Daily Upsample")
+        #print(resample)
+        #print("Interpolating Daily")
+        #print(interpolated)
+        #print("Down Sample 28 Day Interpolation")
+        #print(downSample)
+        pass
 
     for x in range(len(finalData) - 1):
         #treatmentArray = treatmentAdder(finalData[:, 0], np.array(treatDict[patientID]), len(finalData) - 1, patientID)
@@ -265,34 +278,155 @@ def properSampleMaker(patientID, FLC_Value, Date):
     treatMatrix = tryTreatment(datesForTreat, patientID)
     indexT = 0
     counterT = 0
-    with open('miniSeqsMedsSL_6_OL_1 .csv', 'a') as csvfile:    #change to file name
+    with open(medSequenceFileName, 'a') as csvfile:    #change to file name
         while(indexT + segmentLength < len(datesForTreat)):
+            temp = []
             csvfile.write(str(patientID) + "." + str(counterT))
+            temp.append(str(patientID) + "." + str(counterT))
             csvfile.write(",")
             for i in range(indexT, segmentLength + indexT):
-                csvfile.write(str(treatMatrix[i]).replace(',', ';') + ": " + datesForTreat[i])
+                csvfile.write(str(treatMatrix[i]).replace(',', ';') + "," + datesForTreat[i])
+                temp.append(treatMatrix[i])
                 csvfile.write(',')
             csvfile.write('\n')
+            medSequenceMatrix.append(temp)
             indexT = indexT + segmentLength - overlapBy
             counterT += 1
     indexL = 0
     counterL = 0
-    with open('miniSeqsLabsSL_6_OL_1.csv', 'a') as csvfile:  #change to file name
+    with open(labSequenceFileName, 'a') as csvfile:  #change to file name
         while(indexL + segmentLength < len(datesForTreat)):
+            temp = []
             csvfile.write(str(patientID) + "." + str(counterL))
+            temp.append(str(patientID) + "." + str(counterL))
             csvfile.write(",")
             for i in range(indexL, segmentLength + indexL):
                 tempList = innerDict[i]
-                csvfile.write(str(tempList[1]) + ": " + datesForTreat[i])
+                csvfile.write(str(tempList[1]) + "," + datesForTreat[i])
+                temp.append(tempList[1])
                 csvfile.write(',')
             csvfile.write('\n')
+            labSequenceMatrix.append(temp)
             indexL = indexL + segmentLength - overlapBy
             counterL += 1
     for x in range(len(finalData) - 1):
         innerDict[x].append(treatMatrix[x])
     #with open('')
-    print(innerDict)
+    #print(innerDict)
     return innerDict
+
+def getDistancesFromMeds():
+    treatmentData = np.delete(medSequenceMatrix, 0, 1)
+    print(treatmentData)
+    noBits = 24
+    signBitOption = 1 #Set to 1 if you want to use the sign bit (AKA if you
+    # want to keep track of unknown drugs.)
+    monthlyBinaryTreatmentVectors = []
+    for i in range(0, treatmentData.shape[0]):
+        temp = []
+        for j in range(0, segmentLength):
+            binaryTreatment = convTreatmentToBinaryArray(treatmentData[i, j], signBitOption, noBits)
+            temp.append(binaryTreatment)
+        monthlyBinaryTreatmentVectors.append(temp)
+    monthlyBinaryTreatmentVectors = np.array(monthlyBinaryTreatmentVectors)
+    aggregateTreatmentsOption = 0 #Set to 0 for keeping monthly granularity. Set
+    # to 1 to encode all 6 months as one aggregate binary string
+    #print(monthlyBinaryTreatmentVectors.astype(bool))
+    binaryTreatmentVectors = []
+    if(aggregateTreatmentsOption):
+        boolMonthlyTreatVectors = monthlyBinaryTreatmentVectors.astype(bool)
+        for i in range(monthlyBinaryTreatmentVectors.shape[0]):
+            rowOfMonths = np.zeros(noBits + signBitOption).astype(bool)
+            for j in range(monthlyBinaryTreatmentVectors.shape[1]):
+                rowOfMonths = np.logical_or(rowOfMonths, boolMonthlyTreatVectors[i, j])
+            binaryTreatmentVectors.append(rowOfMonths.astype(int))
+    else:
+        for i in range(monthlyBinaryTreatmentVectors.shape[0]):
+            rowOfMonths = np.array([])
+            for j in range(monthlyBinaryTreatmentVectors.shape[1]):
+                rowOfMonths = np.concatenate([rowOfMonths, monthlyBinaryTreatmentVectors[i, j]])
+            binaryTreatmentVectors.append(rowOfMonths)
+    binaryTreatmentVectors = np.array(binaryTreatmentVectors)
+    print(binaryTreatmentVectors)
+    # Set binaryDistanceMethod = 1 for Sokal Michener
+    # Set binaryDistanceMethod = 2 for Jaccard
+    # Set binaryDistanceMethod = 3 for Rogers Tanimoto
+    # Set binaryDistanceMethod = 4 for Sokal Sneath II
+    binaryDistanceMethod = 1
+    distanceMatrix = np.zeros((len(binaryTreatmentVectors), len(binaryTreatmentVectors)))
+    # Set useManualDistanceMethod = 1 to compute distances manually, set useManualDistanceMethod = 0
+    # to use the SciPy distance calculations
+    useManualDistanceMethod = 1
+    if binaryDistanceMethod == 1:
+        for i in range(binaryTreatmentVectors.shape[0]):
+            for j in range(i, binaryTreatmentVectors.shape[0]):
+                if useManualDistanceMethod:
+                    dist = np.sum(np.logical_xor(binaryTreatmentVectors[i].astype(bool), binaryTreatmentVectors[j].astype(bool)))/(noBits + signBitOption)
+                else:
+                    dist = distance.hamming(binaryTreatmentVectors[i].astype(bool), binaryTreatmentVectors[j].astype(bool))
+                distanceMatrix[i, j] = dist
+                distanceMatrix[j, i] = dist
+    elif binaryDistanceMethod == 2:
+        for i in range(binaryTreatmentVectors.shape[0]):
+            for j in range(i, binaryTreatmentVectors.shape[0]):
+                if np.array_equal(binaryTreatmentVectors[i], binaryTreatmentVectors[j]):
+                    dist = 0
+                else:
+                    if useManualDistanceMethod:
+                        numerator = np.sum(np.logical_xor(binaryTreatmentVectors[i].astype(bool), binaryTreatmentVectors[j].astype(bool)))
+                        denomenator = np.sum(np.logical_or(binaryTreatmentVectors[i].astype(bool), binaryTreatmentVectors[j].astype(bool)))
+                        dist = numerator/denomenator
+                    else:
+                        dist = distance.jaccard(binaryTreatmentVectors[i].astype(bool), binaryTreatmentVectors[j].astype(bool))
+                distanceMatrix[i, j] = dist
+                distanceMatrix[j, i] = dist
+    elif binaryDistanceMethod == 3:
+        for i in range(binaryTreatmentVectors.shape[0]):
+            for j in range(i, binaryTreatmentVectors.shape[0]):
+                if useManualDistanceMethod:
+                    numerator = 2 * np.sum(np.logical_xor(binaryTreatmentVectors[i].astype(bool), binaryTreatmentVectors[j].astype(bool)))
+                    denomenator = np.sum(np.logical_xor(binaryTreatmentVectors[i].astype(bool), binaryTreatmentVectors[j].astype(bool))) + noBits + signBitOption
+                    dist = numerator/denomenator
+                else:
+                    dist = distance.rogerstanimoto(binaryTreatmentVectors[i].astype(bool), binaryTreatmentVectors[j].astype(bool))
+                distanceMatrix[i, j] = dist
+                distanceMatrix[j, i] = dist
+    else:
+        for i in range(binaryTreatmentVectors.shape[0]):
+            for j in range(binaryTreatmentVectors.shape[0]):
+                if np.array_equal(binaryTreatmentVectors[i], binaryTreatmentVectors[j]):
+                    dist = 0
+                else:
+                    if useManualDistanceMethod:
+                        numerator = 2 * np.sum(np.logical_xor(binaryTreatmentVectors[i].astype(bool), binaryTreatmentVectors[j].astype(bool)))
+                        denomenator = (2 * np.sum(np.logical_xor(binaryTreatmentVectors[i].astype(bool), binaryTreatmentVectors[j].astype(bool)))) + np.sum(np.logical_and(binaryTreatmentVectors[i].astype(bool), binaryTreatmentVectors[j].astype(bool)))
+                        dist = numerator/denomenator
+                    else:
+                        dist = distance.sokalsneath(binaryTreatmentVectors[i].astype(bool), binaryTreatmentVectors[j].astype(bool))
+                distanceMatrix[i, j] = dist
+    adjustScaleOfDistanceMatrix = 0
+    if adjustScaleOfDistanceMatrix:
+        max = np.amax(distanceMatrix)
+        distanceMatrix = np.divide(distanceMatrix, max)
+    np.savetxt('distanceMatrix.csv', distanceMatrix, delimiter = ',')
+    #ex1 = np.array([1, 0, 1, 0, 0]).astype(bool)
+    #ex2 = np.array([1, 0, 0, 0, 1]).astype(bool)
+    #print(distance.sokalsneath(ex1, ex2))
+    #print(distanceMatrix)
+
+def convTreatmentToBinaryArray(treatment, signBitOption, noBits):
+    signBit = 0
+    if -1 in treatment:
+        signBit = 1
+        treatment.remove(-1)
+    binaryTreatment = np.zeros(noBits)
+    if 0 not in treatment:
+        listTreatments = list(treatment)
+        for i in range(len(listTreatments)):
+            binaryTreatment[listTreatments[i] - 1] = 1
+    if signBitOption:
+        binaryTreatment = np.insert(binaryTreatment, 0, signBit, axis=0)
+    return binaryTreatment
 
 def patientBinCreator(patientID, FLC_Value, Date):
     #innerDict = {'0' : ['test initial'], '1' : ['a', 'b', 'c']}
@@ -699,7 +833,7 @@ def buildMatrix():
         return binnedData
 
 #Will min-max scale the data in binnedData, and then run hdbscan on the new matrix.
-#runs a min-max normalization on the 
+#runs a min-max normalization on the
 def getClustersOnTrend(toBeNormalized):
     for i in range(0, toBeNormalized.shape[0]):
        minFLC = min(toBeNormalized[i][1:].astype(float))
@@ -737,11 +871,12 @@ def partitionTrendClustersOnScale(rawData, clusters):
                 clusterMatrix = np.vstack((clusterMatrix, patient))
                 break
     clusterMatrix = np.delete(clusterMatrix, 0, axis=0)
-    
-#extractInfo()
-#extractRawInfo()
-#rawDelete()
-#rawBinMaker()
+
+extractInfo()
+extractRawInfo()
+rawDelete()
+rawBinMaker()
+getDistancesFromMeds()
 binnedData = buildMatrix()
 rawData = np.copy(binnedData)
 sortedClusters = getClustersOnTrend(binnedData)
