@@ -24,10 +24,10 @@ import os
 #from scipy.io.arff.tests.test_arffread import DataTest
 np.set_printoptions(threshold=np.inf)
 
-def pullRows(inFilename, outFilename, rowsFilename):
-    print(str(os.getcwd()))
+def pullRows(inFilename, outFilename, rowsFilename, matrix):
     global fullMatrix
     global rows
+    benchMatrix = []
     with open(inFilename, 'r') as csvfile:
         reader = csv.reader(csvfile)
         fullMatrix = list(csvfile)
@@ -38,8 +38,8 @@ def pullRows(inFilename, outFilename, rowsFilename):
     for i in range(len(rows)):
         index = int(rows[i].replace('\n', '')) - 1
         out.append(fullMatrix[index])
+        benchMatrix.append(matrix[index, :])
     with open(outFilename, 'w') as csvfile:
         for i in range(len(out)):
             csvfile.write(out[i])
-pullRows('miniSeqsMedsSL_6_OL_0.csv', 'miniSeqsMedsSL_6_OL_0_BENCHMARK.csv', 'BenchmarkRows.csv')
-pullRows('miniSeqsLabsSL_6_OL_0.csv', 'miniSeqsLabsSL_6_OL_0_BENCHMARK.csv', 'BenchmarkRows.csv')
+    return(np.array(benchMatrix))

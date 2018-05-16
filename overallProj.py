@@ -23,11 +23,14 @@ from sympy.polys.partfrac import apart
 from sympy.polys.polytools import intervals
 from docutils.writers.docutils_xml import RawXmlError
 import os
+from rowSelect import pullRows
 #from scipy.io.arff.tests.test_arffread import DataTest
 np.set_printoptions(threshold=np.inf)
 
 # # Global Variable, setting the number of data points we initially look at to 5
 numberOfPoints = 5
+global benchmarkLabs
+global benchmarkMeds
 
 
 def extractInfo():
@@ -917,6 +920,9 @@ rawDelete()
 rawBinMaker()
 treatmentDistances = getDistancesFromMeds()
 clusterFromDistMatrix(treatmentDistances[0:50, 0:50])
+benchmarkMeds = pullRows('miniSeqsMedsSL_6_OL_0.csv', 'miniSeqsMedsSL_6_OL_0_BENCHMARK.csv', 'BenchmarkRows.csv', medSequenceMatrix)
+benchmarkLabs = pullRows('miniSeqsLabsSL_6_OL_0.csv', 'miniSeqsLabsSL_6_OL_0_BENCHMARK.csv', 'BenchmarkRows.csv', labSequenceMatrix)
+
 #binnedData = buildMatrix()
 #rawData = np.copy(binnedData)
 #sortedClusters = getClustersOnTrend(binnedData)
