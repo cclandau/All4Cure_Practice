@@ -9,6 +9,7 @@ from pandas import datetime
 from datetime import datetime, date, time, timedelta
 import math
 from scipy import stats
+from scipy.spatial import distance
 from hdbscan import HDBSCAN
 from sklearn.cluster import DBSCAN
 from sklearn import metrics
@@ -201,7 +202,7 @@ def rawBinMaker():
     global labSequenceMatrix
     medSequenceMatrix = []
     labSequenceMatrix = []
-    medSequenceFileName = 'miniSeqsMedsSL_6_OL_0 .csv'
+    medSequenceFileName = 'miniSeqsMedsSL_6_OL_0.csv'
     labSequenceFileName = 'miniSeqsLabsSL_6_OL_0.csv'
     try:
         os.remove(medSequenceFileName)
@@ -317,7 +318,7 @@ def properSampleMaker(patientID, FLC_Value, Date):
 
 def getDistancesFromMeds():
     treatmentData = np.delete(medSequenceMatrix, 0, 1)
-    print(treatmentData)
+    #print(treatmentData)
     noBits = 24
     signBitOption = 1 #Set to 1 if you want to use the sign bit (AKA if you
     # want to keep track of unknown drugs.)
@@ -347,12 +348,12 @@ def getDistancesFromMeds():
                 rowOfMonths = np.concatenate([rowOfMonths, monthlyBinaryTreatmentVectors[i, j]])
             binaryTreatmentVectors.append(rowOfMonths)
     binaryTreatmentVectors = np.array(binaryTreatmentVectors)
-    print(binaryTreatmentVectors)
+    #print(binaryTreatmentVectors)
     # Set binaryDistanceMethod = 1 for Sokal Michener
     # Set binaryDistanceMethod = 2 for Jaccard
     # Set binaryDistanceMethod = 3 for Rogers Tanimoto
     # Set binaryDistanceMethod = 4 for Sokal Sneath II
-    binaryDistanceMethod = 1
+    binaryDistanceMethod = 2
     distanceMatrix = np.zeros((len(binaryTreatmentVectors), len(binaryTreatmentVectors)))
     # Set useManualDistanceMethod = 1 to compute distances manually, set useManualDistanceMethod = 0
     # to use the SciPy distance calculations
@@ -404,7 +405,7 @@ def getDistancesFromMeds():
                     else:
                         dist = distance.sokalsneath(binaryTreatmentVectors[i].astype(bool), binaryTreatmentVectors[j].astype(bool))
                 distanceMatrix[i, j] = dist
-    adjustScaleOfDistanceMatrix = 0
+    adjustScaleOfDistanceMatrix = 1
     if adjustScaleOfDistanceMatrix:
         max = np.amax(distanceMatrix)
         distanceMatrix = np.divide(distanceMatrix, max)
@@ -413,17 +414,53 @@ def getDistancesFromMeds():
     #ex2 = np.array([1, 0, 0, 0, 1]).astype(bool)
     #print(distance.sokalsneath(ex1, ex2))
     #print(distanceMatrix)
+    return distanceMatrix
+
+def clusterFromDistMatrix(distanceMatrix):
+    clusterer = HDBSCAN(min_cluster_size = 2, metric = 'precomputed')
+    clusterer.fit(distanceMatrix)
+    labels = clusterer.labels_
+    probs = clusterer.probabilities_
+    labels = np.array((labels))[np.newaxis]
+    labels = labels.T
+    probs = np.array((probs))[np.newaxis]
+    probs = probs.T
+    results = np.concatenate((probs, medSequenceMatrix[0:50, :]), axis = 1)
+    results = np.concatenate((labels, results), axis = 1)
+    results = np.array(sorted(results, key=lambda a_entry: a_entry[0]))
+    #print(results)
+    with open('treatmentClusters.txt', 'w') as csvfile:
+        csvfile.write("Cluster; Probability; ID; Month 1; Month 2; Month 3; Month 4; Month 5; Month 6")
+        csvfile.write('\n')
+        for i in range(results.shape[0]):
+            csvfile.write(str(results[i, 0]))
+            csvfile.write(';')
+            csvfile.write(str(results[i, 1]))
+            csvfile.write(';')
+            csvfile.write(str(results[i, 2]))
+            csvfile.write(';')
+            for j in range(3, results.shape[1]):
+                csvfile.write(str(results[i, j]).replace('{', '').replace('}', ''))
+                csvfile.write(';')
+            csvfile.write('\n')
+
+
+
+    #for i in range(50):
+    #    print(medSequenceMatrix[i, :])
+    #print(labels)
+    #print(probs)
 
 def convTreatmentToBinaryArray(treatment, signBitOption, noBits):
     signBit = 0
     if -1 in treatment:
         signBit = 1
-        treatment.remove(-1)
     binaryTreatment = np.zeros(noBits)
     if 0 not in treatment:
         listTreatments = list(treatment)
         for i in range(len(listTreatments)):
-            binaryTreatment[listTreatments[i] - 1] = 1
+            if listTreatments[i] != -1:
+                binaryTreatment[listTreatments[i] - 1] = 1
     if signBitOption:
         binaryTreatment = np.insert(binaryTreatment, 0, signBit, axis=0)
     return binaryTreatment
@@ -872,15 +909,18 @@ def partitionTrendClustersOnScale(rawData, clusters):
                 break
     clusterMatrix = np.delete(clusterMatrix, 0, axis=0)
 
+
+
 extractInfo()
 extractRawInfo()
 rawDelete()
 rawBinMaker()
-getDistancesFromMeds()
-binnedData = buildMatrix()
-rawData = np.copy(binnedData)
-sortedClusters = getClustersOnTrend(binnedData)
-partitionTrendClustersOnScale(rawData, sortedClusters)
+treatmentDistances = getDistancesFromMeds()
+clusterFromDistMatrix(treatmentDistances[0:50, 0:50])
+#binnedData = buildMatrix()
+#rawData = np.copy(binnedData)
+#sortedClusters = getClustersOnTrend(binnedData)
+#partitionTrendClustersOnScale(rawData, sortedClusters)
 #print(binnedData)
 #D1, D2 = derivativeMaker()
 #FLCdictionary(D1, D2)
