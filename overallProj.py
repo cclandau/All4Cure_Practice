@@ -28,9 +28,11 @@ from rowSelect import pullRows
 np.set_printoptions(threshold=np.inf)
 
 # # Global Variable, setting the number of data points we initially look at to 5
-numberOfPoints = 5
+numberOfPoints = 6
 global benchmarkLabs
 global benchmarkMeds
+denominatorTolerance = math.exp(-8)
+treatmentAlpha = 0.7
 
 
 def extractInfo():
@@ -419,7 +421,7 @@ def getDistancesFromMeds():
     #print(distanceMatrix)
     return distanceMatrix
 
-def clusterFromDistMatrix(distanceMatrix):
+def clusterFromDistMatrix(distanceMatrix, selector):
     clusterer = HDBSCAN(min_cluster_size = 2, metric = 'precomputed')
     clusterer.fit(distanceMatrix)
     labels = clusterer.labels_
@@ -428,24 +430,43 @@ def clusterFromDistMatrix(distanceMatrix):
     labels = labels.T
     probs = np.array((probs))[np.newaxis]
     probs = probs.T
-    results = np.concatenate((probs, medSequenceMatrix[0:50, :]), axis = 1)
-    results = np.concatenate((labels, results), axis = 1)
-    results = np.array(sorted(results, key=lambda a_entry: a_entry[0]))
-    #print(results)
-    with open('treatmentClusters.txt', 'w') as csvfile:
-        csvfile.write("Cluster; Probability; ID; Month 1; Month 2; Month 3; Month 4; Month 5; Month 6")
-        csvfile.write('\n')
-        for i in range(results.shape[0]):
-            csvfile.write(str(results[i, 0]))
-            csvfile.write(';')
-            csvfile.write(str(results[i, 1]))
-            csvfile.write(';')
-            csvfile.write(str(results[i, 2]))
-            csvfile.write(';')
-            for j in range(3, results.shape[1]):
-                csvfile.write(str(results[i, j]).replace('{', '').replace('}', ''))
-                csvfile.write(';')
+    if (selector == "treatmentClusters"):
+        results = np.concatenate((probs, medSequenceMatrix[0:50, :]), axis = 1)
+        results = np.concatenate((labels, results), axis = 1)
+        results = np.array(sorted(results, key=lambda a_entry: a_entry[0]))
+    elif (selector == "combinedNormalizedDistanceClusters"):
+        print(benchmarkLabs[:, 0].T)
+        results = np.column_stack((probs, benchmarkLabs[:, 0]))
+        results = np.concatenate((labels, results), axis = 1) 
+        results = np.array(sorted(results, key=lambda a_entry: a_entry[0]))   
+    if (selector == "combinedNormalizedDistanceClusters"): 
+        print(results)
+        #np.savetxt(selector + ".csv", results, delimiter=",")
+        with open(selector + '.csv', 'w') as csvfile:
+            csvfile.write("Cluster; Probability; ID; Month 1; Month 2; Month 3; Month 4; Month 5; Month 6")
             csvfile.write('\n')
+            for i in range(results.shape[0]):
+                csvfile.write(str(results[i, 0]))
+                csvfile.write(',')
+                csvfile.write(str(results[i, 1]))
+                csvfile.write(',')
+                csvfile.write(str(results[i, 2]))
+                csvfile.write('\n')
+    if (selector == "treatmentClusters"):
+        with open(selector + '.csv', 'w') as csvfile:
+            csvfile.write("Cluster; Probability; ID; Month 1; Month 2; Month 3; Month 4; Month 5; Month 6")
+            csvfile.write('\n')
+            for i in range(results.shape[0]):
+                csvfile.write(str(results[i, 0]))
+                csvfile.write(',')
+                csvfile.write(str(results[i, 1]))
+                csvfile.write(',')
+                csvfile.write(str(results[i, 2]))
+                csvfile.write(',')
+                for j in range(3, results.shape[1]):
+                    csvfile.write(str(results[i, j]).replace('{', '').replace('}', ''))
+                    csvfile.write(',')
+                csvfile.write('\n')
 
 
 
@@ -672,28 +693,36 @@ def spearmansCorr():
     np.savetxt("spearman.csv", spearman, delimiter=",")
     return spearman
 
-def minMaxNormalization():
-    minValues = np.array(preSpearman.astype(float).min(axis=1))
+def minMaxNormalization(matrixToNorm, selector):
+    if (selector == "benchmarkLabs"):
+        patients = matrixToNorm[:, 0]
+        matrixToNorm = np.delete(matrixToNorm, 0, 1)
+    minValues = np.array(matrixToNorm.astype(float).min(axis=1))
     minMaxMatrix = np.zeros((len(minValues), numberOfPoints))
     index = 0;
     row = 0;
     # print("FLC Value of each element, Index, Row, minValue and maxValue")
-    for patient in np.nditer(np.array(preSpearman.astype(float))):
-        # print("'{0}', '{1}', '{2}', '{3}'".format(patient, index, row, minValues[row]))
+    for patient in np.nditer(np.array(matrixToNorm.astype(float))):
+        print("'{0}', '{1}', '{2}', '{3}'".format(patient, index, row, minValues[row]))
         temp = np.array(patient)
         temp = temp - minValues[row]  # will need to change to be a field
         # Subtracting original min portion
         minMaxMatrix[row, index] = temp
         index = index + 1
         # in the last column, need to determine max value of new row & update
-        if (index == numberOfPoints):
+        if (selector == "benchmarkLabs" and index == numberOfPoints):
             maxVal = minMaxMatrix[row, :].max()
             minMaxMatrix[row, :] = minMaxMatrix[row, :] / maxVal
             index = 0
             row = row + 1
-    normalizedWithPatientNum = np.array(list(zip(useablePatients, minMaxMatrix)), dtype=object)
+        if (selector != "benchmarkLabs" and index == matrixToNorm.shape[0]):
+            maxVal = minMaxMatrix[row, :].max()
+            minMaxMatrix[row, :] = minMaxMatrix[row, :] / maxVal
+            index = 0
+            row = row + 1
+    normalizedWithPatientNum = np.array(list(zip(patients, minMaxMatrix)), dtype=object)
 
-    with open('minMaxNormalized.csv', 'w') as csvfile:
+    with open(selector + 'minMaxNormalized.csv', 'w') as csvfile:
         csvfile.write("Patient Number + Normalized FLC Values")
         csvfile.write('\n')
         csvfile.write('\n'.join('{}, {}'.format(x[0], x[1]) for x in normalizedWithPatientNum))
@@ -761,11 +790,11 @@ def distanceMatrix(correlationMatrix):
     calculatedMatrix = np.add(calculatedMatrix, 1)  # subtracts each value from 1
     return calculatedMatrix
 
-def pearsonsCorr():
-    pearson = np.zeros((preSpearman.shape[0], preSpearman.shape[0]))
-    for i in range(0, preSpearman.shape[0]):
-        for j in range(0, preSpearman.shape[0]):
-            calculatedPearson = stats.pearsonr(preSpearman[i, :].astype(float), preSpearman[j, :].astype(float))
+def pearsonsCorr(matrixToPearson):
+    pearson = np.zeros((matrixToPearson.shape[0], matrixToPearson.shape[0]))
+    for i in range(0, matrixToPearson.shape[0]):
+        for j in range(0, matrixToPearson.shape[0]):
+            calculatedPearson = stats.pearsonr(matrixToPearson[i, :].astype(float), matrixToPearson[j, :].astype(float))
             corr = calculatedPearson[0]
             pearson[i, j] = corr
             pearson[j, i] = corr
@@ -893,9 +922,9 @@ def partitionTrendClustersOnScale(rawData, clusters):
     for row in clusters:
         if(int(row[1]) != currentCluster):
             clusterMatrix = np.delete(clusterMatrix, 0, axis=0)
-            print(clusterMatrix.shape[0])
-            print("array for cluster: ", currentCluster)
-            print(clusterMatrix, '\n\n\n\n')
+#             print(clusterMatrix.shape[0])
+#             print("array for cluster: ", currentCluster)
+#             print(clusterMatrix, '\n\n\n\n')
             #for clusterRow in range(0, clusterMatrix.shape[0]): #plotting
             #     plt.plot([1,2,3,4,5,6], clusterMatrix[clusterRow,1:].astype(float), label=clusterMatrix[clusterRow, 0])
             #     plt.legend()
@@ -912,16 +941,68 @@ def partitionTrendClustersOnScale(rawData, clusters):
                 break
     clusterMatrix = np.delete(clusterMatrix, 0, axis=0)
 
+def combineDistances(matrix1, matrix2):
+#     print(matrix1.shape[0]) # TREATMENTS
+#     print(matrix2.shape[0]) # LABS
+    overallDist = np.zeros((matrix1.shape[0], matrix1.shape[0]))
+    if (matrix1.shape[0] == matrix2.shape[0]):
+        for i in range(0, matrix1.shape[0]):
+            for j in range(0, matrix1.shape[1]):
+                overallDist[i][j] = (treatmentAlpha * matrix1[i][j]) + ((1 - treatmentAlpha) * matrix2[i][j])
+    np.savetxt("combinedDistanceMatrix.csv", overallDist, delimiter=",")
+    return overallDist
 
+def normalizeDist(matrix):
+    oneDimMatrix = np.ndarray.flatten(matrix)
+    #print(oneDimMatrix)
+    maxValue = np.amax(oneDimMatrix)
+    print("Maximum from matrix: " + str(maxValue))
+    maxValue = max(maxValue, denominatorTolerance)
+    print("Final max value: " + str(maxValue))
+#     print(matrix)
+#     print()
+#     print(max)
+#     print()
+    newMatrix = np.divide(matrix, maxValue)
+    #print(newMatrix)
+    return newMatrix
+    
 
 extractInfo()
 extractRawInfo()
 rawDelete()
 rawBinMaker()
 treatmentDistances = getDistancesFromMeds()
-clusterFromDistMatrix(treatmentDistances[0:50, 0:50])
+np.savetxt("treatmentDistance.csv", treatmentDistances, delimiter=",")
+clusterFromDistMatrix(treatmentDistances[0:50, 0:50], "treatmentClusters")
 benchmarkMeds = pullRows('miniSeqsMedsSL_6_OL_0.csv', 'miniSeqsMedsSL_6_OL_0_BENCHMARK.csv', 'BenchmarkRows.csv', medSequenceMatrix)
 benchmarkLabs = pullRows('miniSeqsLabsSL_6_OL_0.csv', 'miniSeqsLabsSL_6_OL_0_BENCHMARK.csv', 'BenchmarkRows.csv', labSequenceMatrix)
+minmax = minMaxNormalization(benchmarkLabs, "benchmarkLabs")
+pearsonMatrix = pearsonsCorr(minmax)
+pearsonDistMatrix = distanceMatrix(pearsonMatrix)
+np.savetxt("pearsonDistance.csv", pearsonDistMatrix, delimiter=",")
+print("Normalize Pearson")
+pearsonDistNorm = normalizeDist(pearsonDistMatrix)
+np.savetxt("pearsonNormDistance.csv", pearsonDistNorm, delimiter=",")
+print("Normalize Treatment")
+medicationDistNorm = normalizeDist(treatmentDistances[0:50, 0:50])
+np.savetxt("treatmentNormDistance.csv", medicationDistNorm, delimiter=",")
+combDistMatrix = combineDistances(medicationDistNorm, pearsonDistNorm)
+print("Normalize Combination Distance")
+combDistNorm = normalizeDist(combDistMatrix)
+np.savetxt("combinedNormDistance.csv", combDistNorm, delimiter=",")
+clusterFromDistMatrix(combDistNorm, "combinedNormalizedDistanceClusters")
+
+# non normalized
+# treatmentDistance.csv
+# pearsonDistance.csv
+# combinedDistanceClusters.csv
+
+# normalized
+# treatmentNormDistance.csv
+# pearsonNormDistance.csv
+# combinedNormDistance.csv
+# combinedNormalizedDistanceClusters.csv
 
 #binnedData = buildMatrix()
 #rawData = np.copy(binnedData)
