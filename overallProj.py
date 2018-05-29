@@ -435,13 +435,38 @@ def clusterFromDistMatrix(distanceMatrix, selector):
         results = np.concatenate((labels, results), axis = 1)
         results = np.array(sorted(results, key=lambda a_entry: a_entry[0]))
     elif (selector == "combinedNormalizedDistanceClusters"):
-        print(benchmarkLabs[:, 0].T)
+        #print(benchmarkLabs[:, 0].T)
         results = np.column_stack((probs, benchmarkLabs[:, 0]))
         results = np.concatenate((labels, results), axis = 1) 
-        results = np.array(sorted(results, key=lambda a_entry: a_entry[0]))   
+        
+    results = np.array(sorted(results, key=lambda a_entry: a_entry[0]))   
+        
     if (selector == "combinedNormalizedDistanceClusters"): 
-        print(results)
-        #np.savetxt(selector + ".csv", results, delimiter=",")
+        #print(results)
+        # hdb ___ plotting ###
+        #hdb_unique_labels = set(hdb_labels)
+        hdb_colors = plt.cm.Spectral(np.linspace(0, 1, len(labels)))
+        fig = plt.figure(figsize=plt.figaspect(0.5))
+        hdb_axis = fig.add_subplot('121')
+     
+        for i, (k, col) in enumerate(zip(labels, hdb_colors)):
+            if k == -1:
+                # Black used for noise.
+                col = 'k'
+             # Not sure what the x, y axes should be, this is how I had it set up for the previous run of HDBSCAN
+             # Right now it's only comparing the first and second data points of all patients
+             
+            print(i)
+            print(results[i, :])
+            print(benchmarkLabs[i, 1:])
+#             hdb_axis.plot([1, 2, 3, 4, 5, 6, 7], clusterer[i, :].astype(float), 'o', markerfacecolor=col, markeredgecolor='k', markersize=6)
+#         hdb_axis.set_title('HDBSCAN\nEstimated number of clusters: %d' % n_clusters_hdb_)
+#         plt.show()
+        
+#         for clusterRow in range(0, clusterMatrix.shape[0]): #plotting
+#                  plt.plot([1,2,3,4,5,6], clusterMatrix[clusterRow,1:].astype(float), label=clusterMatrix[clusterRow, 0])
+#                  plt.legend()
+        
         with open(selector + '.csv', 'w') as csvfile:
             csvfile.write("Cluster; Probability; ID; Month 1; Month 2; Month 3; Month 4; Month 5; Month 6")
             csvfile.write('\n')
@@ -925,13 +950,13 @@ def partitionTrendClustersOnScale(rawData, clusters):
 #             print(clusterMatrix.shape[0])
 #             print("array for cluster: ", currentCluster)
 #             print(clusterMatrix, '\n\n\n\n')
-            #for clusterRow in range(0, clusterMatrix.shape[0]): #plotting
-            #     plt.plot([1,2,3,4,5,6], clusterMatrix[clusterRow,1:].astype(float), label=clusterMatrix[clusterRow, 0])
-            #     plt.legend()
-            #plt.title("cluster : " + str(currentCluster))
-            #plt.show()
-            #input()
-            #plt.clf()
+            for clusterRow in range(0, clusterMatrix.shape[0]): #plotting
+                 plt.plot([1,2,3,4,5,6], clusterMatrix[clusterRow,1:].astype(float), label=clusterMatrix[clusterRow, 0])
+                 plt.legend()
+            plt.title("cluster : " + str(currentCluster))
+            plt.show()
+            input()
+            plt.clf()
             subClusters = initialHDBProcessing(clusterMatrix, "subClusterData" + str(currentCluster))
             currentCluster = int(row[1])
             clusterMatrix = np.empty(numberOfPoints + 2)
@@ -941,9 +966,8 @@ def partitionTrendClustersOnScale(rawData, clusters):
                 break
     clusterMatrix = np.delete(clusterMatrix, 0, axis=0)
 
-def combineDistances(matrix1, matrix2):
-#     print(matrix1.shape[0]) # TREATMENTS
-#     print(matrix2.shape[0]) # LABS
+# matrix1 = TREATMENTS matrix2 = LABS
+def combineDistances(matrix1, matrix2): 
     overallDist = np.zeros((matrix1.shape[0], matrix1.shape[0]))
     if (matrix1.shape[0] == matrix2.shape[0]):
         for i in range(0, matrix1.shape[0]):
@@ -972,22 +996,28 @@ extractInfo()
 extractRawInfo()
 rawDelete()
 rawBinMaker()
+
 treatmentDistances = getDistancesFromMeds()
 np.savetxt("treatmentDistance.csv", treatmentDistances, delimiter=",")
+
 clusterFromDistMatrix(treatmentDistances[0:50, 0:50], "treatmentClusters")
 benchmarkMeds = pullRows('miniSeqsMedsSL_6_OL_0.csv', 'miniSeqsMedsSL_6_OL_0_BENCHMARK.csv', 'BenchmarkRows.csv', medSequenceMatrix)
 benchmarkLabs = pullRows('miniSeqsLabsSL_6_OL_0.csv', 'miniSeqsLabsSL_6_OL_0_BENCHMARK.csv', 'BenchmarkRows.csv', labSequenceMatrix)
 minmax = minMaxNormalization(benchmarkLabs, "benchmarkLabs")
+
 pearsonMatrix = pearsonsCorr(minmax)
 pearsonDistMatrix = distanceMatrix(pearsonMatrix)
 np.savetxt("pearsonDistance.csv", pearsonDistMatrix, delimiter=",")
+
 print("Normalize Pearson")
 pearsonDistNorm = normalizeDist(pearsonDistMatrix)
 np.savetxt("pearsonNormDistance.csv", pearsonDistNorm, delimiter=",")
+
 print("Normalize Treatment")
 medicationDistNorm = normalizeDist(treatmentDistances[0:50, 0:50])
 np.savetxt("treatmentNormDistance.csv", medicationDistNorm, delimiter=",")
 combDistMatrix = combineDistances(medicationDistNorm, pearsonDistNorm)
+
 print("Normalize Combination Distance")
 combDistNorm = normalizeDist(combDistMatrix)
 np.savetxt("combinedNormDistance.csv", combDistNorm, delimiter=",")
